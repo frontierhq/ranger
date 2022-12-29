@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - FTR-72/implement
   pull_request:
     branches:
       - main
