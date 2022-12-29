@@ -21,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	command := cmd.NewCmdRanger(configuration, version, commit, date)
+	command := cmd.NewCmdRoot(configuration, version, commit, date)
 	if err := command.Execute(); err != nil {
 		output.PrintlnError(err)
 		os.Exit(1)
