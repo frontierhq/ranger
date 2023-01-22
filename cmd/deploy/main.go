@@ -16,8 +16,6 @@ func NewCmdDeploy() *cobra.Command {
 			}
 
 			return nil
-
-			return nil
 		},
 	}
 

@@ -12,7 +12,7 @@ var (
 	orgName     = ""
 )
 
-// NewCmdDeploy creates a new deploy command
+// NewCmdDeployManifest creates a new deploy command
 func NewCmdDeployManifest() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "manifest",
