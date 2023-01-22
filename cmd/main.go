@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/frontierdigital/ranger/cmd/deploy"
 	vers "github.com/frontierdigital/ranger/cmd/version"
 	"github.com/frontierdigital/ranger/core/configuration"
 )
@@ -21,6 +22,7 @@ func NewCmdRoot(configuration *configuration.Configuration, version string, comm
 		},
 	}
 
+	rootCmd.AddCommand(deploy.NewCmdDeploy())
 	rootCmd.AddCommand(vers.NewCmdVersion(version, commit, date))
 
 	return rootCmd
