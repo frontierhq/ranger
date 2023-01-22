@@ -19,9 +19,12 @@ func LoadConfiguration() (configuration *Configuration, err error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	viper.BindEnv("ado.pat")
+	err = viper.BindEnv("ado.pat")
+	if err != nil {
+		return nil, err
+	}
 
 	err = viper.Unmarshal(&configuration)
 
-	return
+	return configuration, err
 }
