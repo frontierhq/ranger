@@ -12,13 +12,6 @@ func NewCmdDeploy(cfg *configuration.Configuration) *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploy will deploy",
 		Long:  "Deploy will deploy",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			if err := cmd.Help(); err != nil {
-				return err
-			}
-
-			return nil
-		},
 	}
 
 	c.AddCommand(NewCmdDeployManifest(cfg))
