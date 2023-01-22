@@ -22,7 +22,7 @@ func NewCmdRoot(configuration *configuration.Configuration, version string, comm
 		},
 	}
 
-	rootCmd.AddCommand(deploy.NewCmdDeploy())
+	rootCmd.AddCommand(deploy.NewCmdDeploy(configuration))
 	rootCmd.AddCommand(vers.NewCmdVersion(version, commit, date))
 
 	return rootCmd

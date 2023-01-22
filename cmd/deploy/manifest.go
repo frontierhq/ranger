@@ -3,6 +3,7 @@ package deploy
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/frontierdigital/ranger/core/configuration"
 	"github.com/frontierdigital/ranger/core/output"
 )
 
@@ -13,7 +14,7 @@ var (
 )
 
 // NewCmdDeployManifest creates a new deploy command
-func NewCmdDeployManifest() *cobra.Command {
+func NewCmdDeployManifest(cfg *configuration.Configuration) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "manifest",
 		Short: "deploy a manifest",
@@ -26,7 +27,7 @@ func NewCmdDeployManifest() *cobra.Command {
 		},
 	}
 
-	c.Flags().StringVarP(&pat, "pat", "t", "", "Personal Access Token for ADO")
+	c.Flags().StringVarP(&pat, "pat", "t", cfg.ADO.PAT, "Personal Access Token for ADO")
 	c.Flags().StringVarP(&projectName, "proj", "p", "", "ADO Project Name")
 	c.Flags().StringVarP(&orgName, "org", "o", "", "ADO Organisation")
 
