@@ -1,7 +1,7 @@
 package deploy
 
 import (
-	"github.com/frontierdigital/ranger/structs"
+	"github.com/frontierdigital/ranger/core/structs"
 	"github.com/spf13/cobra"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/frontierdigital/ranger/core/structs"
 	"github.com/frontierdigital/ranger/core/util"
-	"github.com/frontierdigital/ranger/structs"
 	"github.com/microsoft/azure-devops-go-api/azuredevops"
 	"github.com/microsoft/azure-devops-go-api/azuredevops/core"
 )

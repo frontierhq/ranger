@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/frontierdigital/ranger/core/deploy"
-	"github.com/frontierdigital/ranger/structs"
+	"github.com/frontierdigital/ranger/core/structs"
 )
 
 var (

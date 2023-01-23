@@ -5,7 +5,7 @@ import (
 
 	"github.com/frontierdigital/ranger/cmd/deploy"
 	vers "github.com/frontierdigital/ranger/cmd/version"
-	"github.com/frontierdigital/ranger/structs"
+	"github.com/frontierdigital/ranger/core/structs"
 )
 
 func NewCmdRoot(configuration *structs.Configuration, version string, commit string, date string) *cobra.Command {

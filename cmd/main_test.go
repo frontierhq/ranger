@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/structs"
+	"github.com/frontierdigital/ranger/core/structs"
 )
 
 func TestNewCmdRoot(t *testing.T) {

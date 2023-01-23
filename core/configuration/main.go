@@ -3,7 +3,7 @@ package configuration
 import (
 	"strings"
 
-	"github.com/frontierdigital/ranger/structs"
+	"github.com/frontierdigital/ranger/core/structs"
 	"github.com/spf13/viper"
 )
 
