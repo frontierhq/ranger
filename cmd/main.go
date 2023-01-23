@@ -5,10 +5,10 @@ import (
 
 	"github.com/frontierdigital/ranger/cmd/deploy"
 	vers "github.com/frontierdigital/ranger/cmd/version"
-	"github.com/frontierdigital/ranger/core/configuration"
+	"github.com/frontierdigital/ranger/structs"
 )
 
-func NewCmdRoot(configuration *configuration.Configuration, version string, commit string, date string) *cobra.Command {
+func NewCmdRoot(configuration *structs.Configuration, version string, commit string, date string) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:                   "ranger",
 		DisableFlagsInUseLine: true,

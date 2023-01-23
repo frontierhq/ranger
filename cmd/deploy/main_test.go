@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewCmdDeploy(t *testing.T) {
-	cmd := NewCmdDeploy()
+	cmd := NewCmdDeploy(nil)
 
 	if cmd.Use != "deploy" {
 		t.Errorf("Use is not correct")

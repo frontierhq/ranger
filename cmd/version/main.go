@@ -1,10 +1,9 @@
 package version
 
 import (
+	"github.com/frontierdigital/ranger/core/util"
 	"github.com/spf13/cobra"
 	goVersion "go.hein.dev/go-version"
-
-	"github.com/frontierdigital/ranger/core/output"
 )
 
 var (
@@ -20,7 +19,7 @@ func NewCmdVersion(version string, commit string, date string) *cobra.Command {
 		Long:  "Prints the version, Git commit ID and commit date in JSON or YAML format using the go.hein.dev/go-version package.",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			resp := goVersion.FuncWithOutput(shortened, version, commit, date, outputFmt)
-			output.PrintfInfo(resp)
+			util.PrintfInfo(resp)
 
 			return nil
 		},

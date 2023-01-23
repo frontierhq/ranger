@@ -3,33 +3,32 @@ package deploy
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/frontierdigital/ranger/core/configuration"
-	"github.com/frontierdigital/ranger/core/output"
+	"github.com/frontierdigital/ranger/core/deploy"
+	"github.com/frontierdigital/ranger/structs"
 )
 
 var (
-	pat         = ""
 	projectName = ""
 	orgName     = ""
 )
 
-// NewCmdDeployManifest creates a new deploy command
-func NewCmdDeployManifest(cfg *configuration.Configuration) *cobra.Command {
+// NewCmdDeployManifest creates a command to deploy a manifest
+func NewCmdDeployManifest(configuration *structs.Configuration) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "manifest",
 		Short: "deploy a manifest",
 		Long:  "deploy a manifest",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			output.Println("deploy manifest")
-			output.Printf("%s %s %s\n", pat, projectName, orgName)
+			if err := deploy.DeployManifest(configuration, projectName, orgName); err != nil {
+				return err
+			}
 
 			return nil
 		},
 	}
 
-	c.Flags().StringVarP(&pat, "pat", "t", cfg.ADO.PAT, "Personal Access Token for ADO")
-	c.Flags().StringVarP(&projectName, "proj", "p", "", "ADO Project Name")
-	c.Flags().StringVarP(&orgName, "org", "o", "", "ADO Organisation")
+	c.Flags().StringVarP(&projectName, "project-name", "p", "", "Project name")
+	c.Flags().StringVarP(&orgName, "organisation-name", "o", "", "Organisation name")
 
 	return c
 }

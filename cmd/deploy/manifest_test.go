@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewCmdDeployManifest(t *testing.T) {
-	cmd := NewCmdDeployManifest()
+	cmd := NewCmdDeployManifest(nil)
 
 	if cmd.Use != "manifest" {
 		t.Errorf("Use is not correct")

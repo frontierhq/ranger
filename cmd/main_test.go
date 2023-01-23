@@ -3,11 +3,11 @@ package cmd
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/core/configuration"
+	"github.com/frontierdigital/ranger/structs"
 )
 
 func TestNewCmdRoot(t *testing.T) {
-	configuration := configuration.Configuration{}
+	configuration := structs.Configuration{}
 	cmd := NewCmdRoot(&configuration, "0.0.0", "commitid", "date")
 
 	if cmd.Use != "ranger" {
