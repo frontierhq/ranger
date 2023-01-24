@@ -1,7 +1,7 @@
 package version
 
 import (
-	"github.com/frontierdigital/ranger/core/util"
+	"github.com/frontierdigital/ranger/core/print"
 	"github.com/spf13/cobra"
 	goVersion "go.hein.dev/go-version"
 )
@@ -13,20 +13,20 @@ var (
 
 // NewCmdVersion creates a command to output the current version of Ranger
 func NewCmdVersion(version string, commit string, date string) *cobra.Command {
-	c := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Version will output the current build information",
-		Long:  "Prints the version, Git commit ID and commit date in JSON or YAML format using the go.hein.dev/go-version package.",
+		Short: "Output the current build information",
+		Long:  "Print the version, Git commit ID and commit date in JSON or YAML format using the go.hein.dev/go-version package.",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			resp := goVersion.FuncWithOutput(shortened, version, commit, date, outputFmt)
-			util.PrintfInfo(resp)
+			print.PrintfWarn(resp)
 
 			return nil
 		},
 	}
 
-	c.Flags().BoolVarP(&shortened, "short", "s", false, "Print just the version number.")
-	c.Flags().StringVarP(&outputFmt, "output", "o", "json", "Output format. One of 'yaml' or 'json'.")
+	cmd.Flags().BoolVarP(&shortened, "short", "s", false, "Print just the version number.")
+	cmd.Flags().StringVarP(&outputFmt, "output", "o", "json", "Output format. One of 'yaml' or 'json'.")
 
-	return c
+	return cmd
 }

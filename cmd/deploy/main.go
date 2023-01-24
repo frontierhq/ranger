@@ -1,19 +1,18 @@
 package deploy
 
 import (
-	"github.com/frontierdigital/ranger/core/structs"
+	"github.com/frontierdigital/ranger/core"
 	"github.com/spf13/cobra"
 )
 
 // NewCmdDeploy creates a command to deploy an artifact
-func NewCmdDeploy(configuration *structs.Configuration) *cobra.Command {
-	c := &cobra.Command{
+func NewCmdDeploy(configuration *core.Configuration) *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy will deploy",
-		Long:  "Deploy will deploy",
+		Short: "Deploy an artifact",
 	}
 
-	c.AddCommand(NewCmdDeployManifest(configuration))
+	cmd.AddCommand(NewCmdDeployManifest(configuration))
 
-	return c
+	return cmd
 }

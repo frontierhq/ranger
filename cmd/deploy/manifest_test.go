@@ -2,10 +2,13 @@ package deploy
 
 import (
 	"testing"
+
+	"github.com/frontierdigital/ranger/core"
 )
 
 func TestNewCmdDeployManifest(t *testing.T) {
-	cmd := NewCmdDeployManifest(nil)
+	configuration := core.Configuration{}
+	cmd := NewCmdDeployManifest(&configuration)
 
 	if cmd.Use != "manifest" {
 		t.Errorf("Use is not correct")

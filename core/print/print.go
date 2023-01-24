@@ -1,4 +1,4 @@
-package util
+package print
 
 import (
 	"fmt"
@@ -81,4 +81,8 @@ func printfInColor(color func(string, ...interface{})) func(string, ...interface
 		}
 	}
 	return printer
+}
+
+func PrintManifestHeader(name string, layer string, environment string, version int64) {
+
 }

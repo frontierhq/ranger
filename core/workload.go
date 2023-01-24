@@ -1,4 +1,4 @@
-package structs
+package core
 
 type Workload struct {
 	Name    string `yaml:"name"`

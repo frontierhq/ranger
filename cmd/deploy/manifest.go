@@ -3,8 +3,8 @@ package deploy
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/frontierdigital/ranger/core"
 	"github.com/frontierdigital/ranger/core/deploy"
-	"github.com/frontierdigital/ranger/core/structs"
 )
 
 var (
@@ -13,11 +13,10 @@ var (
 )
 
 // NewCmdDeployManifest creates a command to deploy a manifest
-func NewCmdDeployManifest(configuration *structs.Configuration) *cobra.Command {
-	c := &cobra.Command{
+func NewCmdDeployManifest(configuration *core.Configuration) *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "manifest",
-		Short: "deploy a manifest",
-		Long:  "deploy a manifest",
+		Short: "Deploy a manifest",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := deploy.DeployManifest(configuration, projectName, orgName); err != nil {
 				return err
@@ -27,8 +26,8 @@ func NewCmdDeployManifest(configuration *structs.Configuration) *cobra.Command {
 		},
 	}
 
-	c.Flags().StringVarP(&projectName, "project-name", "p", "", "Project name")
-	c.Flags().StringVarP(&orgName, "organisation-name", "o", "", "Organisation name")
+	cmd.Flags().StringVarP(&projectName, "project-name", "p", "", "Project name")
+	cmd.Flags().StringVarP(&orgName, "organisation-name", "o", "", "Organisation name")
 
-	return c
+	return cmd
 }

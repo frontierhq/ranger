@@ -5,7 +5,7 @@ import (
 
 	"github.com/frontierdigital/ranger/cmd"
 	"github.com/frontierdigital/ranger/core/configuration"
-	"github.com/frontierdigital/ranger/core/util"
+	"github.com/frontierdigital/ranger/core/print"
 )
 
 var (
@@ -17,13 +17,13 @@ var (
 func main() {
 	configuration, err := configuration.LoadConfiguration()
 	if err != nil {
-		util.PrintlnError(err)
+		print.PrintlnError(err)
 		os.Exit(1)
 	}
 
 	command := cmd.NewCmdRoot(configuration, version, commit, date)
 	if err := command.Execute(); err != nil {
-		util.PrintlnError(err)
+		print.PrintlnError(err)
 		os.Exit(1)
 	}
 }
