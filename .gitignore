@@ -1,7 +1,8 @@
 # ide
+.env
 .vscode
 
 # go
-ranger
+/ranger
 
 # other
