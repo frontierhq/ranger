@@ -20,11 +20,6 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 
 	ctx := context.Background()
 
-	// coreClient, err := core.NewClient(ctx, connection)
-	// if err != nil {
-	// 	return err
-	// }
-
 	buildClient, err := build.NewClient(ctx, connection)
 	if err != nil {
 		return err
@@ -44,13 +39,6 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 	manifestName := fmt.Sprintf("%s-%s", manifest.Environment, manifest.Layer)
 
 	manifest.PrintHeader(manifestName, manifest.Layer, manifest.Environment, manifest.Version)
-
-	// repository := slices.IndexFunc(repositories, func(r git.GitRepository) bool { return r.Name ==  })
-
-	// responseValue, err := coreClient.GetProjects(ctx, core.GetProjectsArgs{})
-	// if err != nil {
-	// 	return err
-	// }
 
 	for _, workload := range manifest.Workloads {
 		sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
@@ -72,7 +60,8 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 		}
 		pipeline := pipelines.Value[0]
 
-		output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)", *pipeline.Id, workload.Source, organisationName, projectName, *pipeline.Id)
+		output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+			*pipeline.Id, workload.Source, organisationName, projectName, *pipeline.Id)
 
 		getRepositoriesArgs := git.GetRepositoriesArgs{
 			Project: &sourceProjectName,
@@ -81,8 +70,10 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 		if err != nil {
 			return err
 		}
-		repository := slices.IndexFunc(*repositories, func(r git.GitRepository) bool { return r.Name == &sourceRepositoryName })
-		_ = repository
+		findRepositoryFunc := func(r git.GitRepository) bool { return r.Name == &sourceRepositoryName }
+		repositoryIdx := slices.IndexFunc(*repositories, findRepositoryFunc)
+
+		_ = repositories[repositoryIdx]
 	}
 
 	return nil
