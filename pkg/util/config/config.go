@@ -17,6 +17,16 @@ func LoadConfig() (config *app.Config, err error) {
 		return nil, err
 	}
 
+	err = viper.BindEnv("git.useremail")
+	if err != nil {
+		return nil, err
+	}
+
+	err = viper.BindEnv("git.username")
+	if err != nil {
+		return nil, err
+	}
+
 	err = viper.Unmarshal(&config)
 
 	return config, err
