@@ -7,6 +7,7 @@ import (
 	vers "github.com/frontierdigital/ranger/pkg/cmd/cli/version"
 	"github.com/frontierdigital/ranger/pkg/util/config"
 	"github.com/frontierdigital/ranger/pkg/util/output"
+
 	"github.com/spf13/cobra"
 )
 

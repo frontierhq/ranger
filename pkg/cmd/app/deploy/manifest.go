@@ -3,22 +3,19 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/app"
+	"github.com/frontierdigital/ranger/pkg/util/azure_devops"
+	"github.com/frontierdigital/ranger/pkg/util/git"
 	"github.com/frontierdigital/ranger/pkg/util/manifest"
 	"github.com/frontierdigital/ranger/pkg/util/output"
-	git "github.com/libgit2/git2go/v34"
-	"github.com/microsoft/azure-devops-go-api/azuredevops"
-	"github.com/microsoft/azure-devops-go-api/azuredevops/build"
-	adoGit "github.com/microsoft/azure-devops-go-api/azuredevops/git"
-	"github.com/segmentio/ksuid"
-	"golang.org/x/exp/slices"
 
-	cp "github.com/otiai10/copy"
+	"github.com/microsoft/azure-devops-go-api/azuredevops"
+	"github.com/otiai10/copy"
+	"github.com/segmentio/ksuid"
 )
 
 func DeployManifest(config *app.Config, projectName string, organisationName string) error {
@@ -26,16 +23,6 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 	connection := azuredevops.NewPatConnection(organisationUrl, config.ADO.PAT)
 
 	ctx := context.Background()
-
-	buildClient, err := build.NewClient(ctx, connection)
-	if err != nil {
-		return err
-	}
-
-	gitClient, err := adoGit.NewClient(ctx, connection)
-	if err != nil {
-		return err
-	}
 
 	manifestFilepath, _ := filepath.Abs("./manifest.yml")
 	manifest, err := manifest.LoadManifest(manifestFilepath)
@@ -51,36 +38,18 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 		sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
 
 		pipelineName := fmt.Sprintf("%s (deploy)", sourceRepositoryName)
-		getDefinitionsArgs := build.GetDefinitionsArgs{
-			Name:    &pipelineName,
-			Project: &sourceProjectName,
-		}
-		pipelines, err := buildClient.GetDefinitions(ctx, getDefinitionsArgs)
+		pipeline, err := azure_devops.GetPipelineByName(ctx, connection, sourceProjectName, pipelineName)
 		if err != nil {
 			return err
 		}
-		if len(pipelines.Value) == 0 {
-			return fmt.Errorf("pipeline with name '%s' not found", pipelineName)
-		}
-		if len(pipelines.Value) > 1 {
-			return fmt.Errorf("multiple pipeline with name '%s' found", pipelineName)
-		}
-		pipeline := pipelines.Value[0]
 
 		output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
 			*pipeline.Id, workload.Source, organisationName, projectName, *pipeline.Id)
 
-		getRepositoriesArgs := adoGit.GetRepositoriesArgs{
-			Project: &sourceProjectName,
-		}
-		repositories, err := gitClient.GetRepositories(ctx, getRepositoriesArgs)
+		repository, err := azure_devops.GetRepositoryByName(ctx, connection, sourceProjectName, sourceRepositoryName)
 		if err != nil {
 			return err
 		}
-		findRepositoryFunc := func(r adoGit.GitRepository) bool { return *r.Name == sourceRepositoryName }
-		repositoryIdx := slices.IndexFunc(*repositories, findRepositoryFunc)
-
-		repository := (*repositories)[repositoryIdx]
 
 		output.PrintlnfInfo("Found repository with Id '%s' for workload '%s' (%s)", repository.Id, workload.Source, *repository.WebUrl)
 
@@ -99,122 +68,42 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 		}
 
 		if workloadConfigExists || workloadSecretsExists {
-			configRepoPath, err := ioutil.TempDir("", "rangerconfig")
-			if err != nil {
-				return err
-			}
-
-			err = os.RemoveAll(configRepoPath)
-			if err != nil {
-				return err
-			}
-
 			configRepoName := "generated-manifest-config"
 			configRepoUrl := fmt.Sprintf("https://frontierdigital@dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
 
-			cloneOptions := &git.CloneOptions{
-				FetchOptions: git.FetchOptions{
-					RemoteCallbacks: git.RemoteCallbacks{
-						CredentialsCallback: makeCredentialsCallback(config.ADO.PAT, "x-oauth-basic"),
-					},
-				},
-			}
-			configRepo, err := git.Clone(configRepoUrl, configRepoPath, cloneOptions)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			configRepo, configRepoPath, err := git.CloneOverHttp(configRepoUrl, config.ADO.PAT, "x-oauth-basic")
 			if err != nil {
 				return err
 			}
 
 			configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, manifest.Environment, manifest.Layer, ksuid.New().String())
-			head, err := configRepo.Head()
+			branch, err := git.CheckoutBranch(configRepo, configBranchName, true)
 			if err != nil {
 				return err
-			}
-			headCommit, err := configRepo.LookupCommit(head.Target())
-			if err != nil {
-				return err
-			}
-			branch, err := configRepo.CreateBranch(configBranchName, headCommit, false)
-			if err != nil {
-				return err
-			}
-			_, err = configRepo.References.CreateSymbolic("HEAD", fmt.Sprintf("refs/heads/%s", configBranchName), true, "headOne")
-			if err != nil {
-				return err
-			}
-			checkoutOptions := &git.CheckoutOptions{
-				Strategy: git.CheckoutSafe | git.CheckoutRecreateMissing,
-			}
-			if err := configRepo.CheckoutHead(checkoutOptions); err != nil {
-				return err
-			}
-
-			signature := &git.Signature{
-				Email: config.Git.UserEmail,
-				Name:  config.Git.UserName,
 			}
 
 			if workloadConfigExists {
-				err = cp.Copy(workloadConfigPath, path.Join(configRepoPath, ".config"))
+				err = copy.Copy(workloadConfigPath, path.Join(configRepoPath, ".config"))
 				if err != nil {
 					return err
 				}
 			}
 
 			if workloadSecretsExists {
-				err = cp.Copy(workloadSecretsPath, path.Join(configRepoPath, ".secrets"))
+				err = copy.Copy(workloadSecretsPath, path.Join(configRepoPath, ".secrets"))
 				if err != nil {
 					return err
 				}
 			}
 
-			idx, err := configRepo.Index()
-			if err != nil {
-				return err
-			}
-
-			idx.AddAll([]string{}, git.IndexAddDefault, nil)
-			if err != nil {
-				return err
-			}
-
-			treeId, err := idx.WriteTree()
-			if err != nil {
-				return err
-			}
-			err = idx.Write()
-			if err != nil {
-				return err
-			}
-			tree, err := configRepo.LookupTree(treeId)
-			if err != nil {
-				return err
-			}
-			commitTarget, err := configRepo.LookupCommit(branch.Target())
-			if err != nil {
-				return err
-			}
 			commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and layer '%s'", workload.Name, manifest.Environment, manifest.Layer)
-			commitId, err := configRepo.CreateCommit(fmt.Sprintf("refs/heads/%s", configBranchName), signature, signature, commitMessage, tree, commitTarget)
-			if err != nil {
-				return err
-			}
-			_ = commitId
-
-			remote, err := configRepo.Remotes.Lookup("origin")
+			_, err = git.Commit(configRepo, branch, config.Git.UserEmail, config.Git.UserName, commitMessage)
 			if err != nil {
 				return err
 			}
 
-			pushOptions := &git.PushOptions{
-				RemoteCallbacks: git.RemoteCallbacks{
-					CredentialsCallback: makeCredentialsCallback(config.ADO.PAT, "x-oauth-basic"),
-				},
-			}
-			if err := remote.Push([]string{fmt.Sprintf("refs/heads/%s", configBranchName)}, pushOptions); err != nil {
+			err = git.Push(configRepo, branch, config.ADO.PAT, "x-oauth-basic")
+			if err != nil {
 				return err
 			}
 
@@ -225,17 +114,4 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 	}
 
 	return nil
-}
-
-func makeCredentialsCallback(username, password string) git.CredentialsCallback {
-	// If we're trying it means the credentials are invalid
-	called := false
-	return func(url string, username_from_url string, allowed_types git.CredentialType) (*git.Credential, error) {
-		if called {
-			return nil, git.MakeGitError2(2)
-		}
-		called = true
-		cred, err := git.NewCredentialUserpassPlaintext(username, password)
-		return cred, err
-	}
 }

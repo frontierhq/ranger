@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/app"
+
 	"gopkg.in/yaml.v2"
 )
 

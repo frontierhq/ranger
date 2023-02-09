@@ -1,10 +1,10 @@
 package deploy
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/frontierdigital/ranger/pkg/cmd/app"
 	"github.com/frontierdigital/ranger/pkg/cmd/app/deploy"
+
+	"github.com/spf13/cobra"
 )
 
 var (

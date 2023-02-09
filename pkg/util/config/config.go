@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/app"
+
 	"github.com/spf13/viper"
 )
 
