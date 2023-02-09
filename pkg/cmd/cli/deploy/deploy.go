@@ -1,13 +1,13 @@
 package deploy
 
 import (
-	"github.com/frontierdigital/ranger/pkg/cmd/app"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
 
 	"github.com/spf13/cobra"
 )
 
 // NewCmdDeploy creates a command to deploy an artifact
-func NewCmdDeploy(config *app.Config) *cobra.Command {
+func NewCmdDeploy(config *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy an artifact",

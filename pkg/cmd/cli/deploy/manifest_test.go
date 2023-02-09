@@ -3,11 +3,11 @@ package deploy
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/app"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
 )
 
 func TestNewCmdDeployManifest(t *testing.T) {
-	config := app.Config{}
+	config := config.Config{}
 	cmd := NewCmdDeployManifest(&config)
 
 	if cmd.Use != "manifest" {

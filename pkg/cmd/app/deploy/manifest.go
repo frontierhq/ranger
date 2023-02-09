@@ -7,9 +7,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/app"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/type/git"
 	"github.com/frontierdigital/ranger/pkg/util/azure_devops"
-	"github.com/frontierdigital/ranger/pkg/util/git"
 	"github.com/frontierdigital/ranger/pkg/util/manifest"
 	"github.com/frontierdigital/ranger/pkg/util/output"
 
@@ -18,7 +18,7 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-func DeployManifest(config *app.Config, projectName string, organisationName string) error {
+func DeployManifest(config *config.Config, projectName string, organisationName string) error {
 	organisationUrl := fmt.Sprintf("https://dev.azure.com/%s", organisationName)
 	connection := azuredevops.NewPatConnection(organisationUrl, config.ADO.PAT)
 
@@ -30,11 +30,13 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 		return err
 	}
 
-	manifestName := fmt.Sprintf("%s-%s", manifest.Environment, manifest.Layer)
+	manifest.PrintHeader()
 
-	manifest.PrintHeader(manifestName, manifest.Layer, manifest.Environment, manifest.Version)
+	manifest.PrintWorkloadsSummary()
 
 	for _, workload := range manifest.Workloads {
+		workload.PrintHeader()
+
 		sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
 
 		pipelineName := fmt.Sprintf("%s (deploy)", sourceRepositoryName)
@@ -71,13 +73,26 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 			configRepoName := "generated-manifest-config"
 			configRepoUrl := fmt.Sprintf("https://frontierdigital@dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
 
-			configRepo, configRepoPath, err := git.CloneOverHttp(configRepoUrl, config.ADO.PAT, "x-oauth-basic")
+			configRepoPath, err := os.MkdirTemp("", "")
+			if err != nil {
+				return err
+			}
+			configRepo := git.NewGit(configRepoPath)
+			err = configRepo.CloneOverHttp(configRepoUrl, config.ADO.PAT, "x-oauth-basic")
+			if err != nil {
+				return err
+			}
+			err = configRepo.SetConfig("user.email", config.Git.UserEmail)
+			if err != nil {
+				return err
+			}
+			err = configRepo.SetConfig("user.name", config.Git.UserName)
 			if err != nil {
 				return err
 			}
 
 			configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, manifest.Environment, manifest.Layer, ksuid.New().String())
-			branch, err := git.CheckoutBranch(configRepo, configBranchName, true)
+			err = configRepo.Checkout(configBranchName, true)
 			if err != nil {
 				return err
 			}
@@ -96,19 +111,25 @@ func DeployManifest(config *app.Config, projectName string, organisationName str
 				}
 			}
 
-			commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and layer '%s'", workload.Name, manifest.Environment, manifest.Layer)
-			_, err = git.Commit(configRepo, branch, config.Git.UserEmail, config.Git.UserName, commitMessage)
+			err = configRepo.AddAll()
 			if err != nil {
 				return err
 			}
 
-			err = git.Push(configRepo, branch, config.ADO.PAT, "x-oauth-basic")
+			commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and layer '%s'", workload.Name, manifest.Environment, manifest.Layer)
+			err = configRepo.Commit(commitMessage)
+			if err != nil {
+				return err
+			}
+
+			err = configRepo.Push(false)
 			if err != nil {
 				return err
 			}
 
 			output.PrintlnfInfo("Pushed config (https://dev.azure.com/%s/%s/_git/%s?version=GB%s)", organisationName, projectName, configRepoName, configBranchName)
 
+			workload.PrintFooter("", "", "", "")
 			defer os.RemoveAll(configRepoPath)
 		}
 	}

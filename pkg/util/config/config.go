@@ -3,12 +3,12 @@ package config
 import (
 	"strings"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/app"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
 
 	"github.com/spf13/viper"
 )
 
-func LoadConfig() (config *app.Config, err error) {
+func LoadConfig() (config *config.Config, err error) {
 	viper.SetEnvPrefix("RANGER")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()

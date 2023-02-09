@@ -1,8 +1,8 @@
 package deploy
 
 import (
-	"github.com/frontierdigital/ranger/pkg/cmd/app"
 	"github.com/frontierdigital/ranger/pkg/cmd/app/deploy"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +13,7 @@ var (
 )
 
 // NewCmdDeployManifest creates a command to deploy a manifest
-func NewCmdDeployManifest(config *app.Config) *cobra.Command {
+func NewCmdDeployManifest(config *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "manifest",
 		Short: "Deploy a manifest",
