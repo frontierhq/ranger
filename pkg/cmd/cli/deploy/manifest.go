@@ -2,7 +2,7 @@ package deploy
 
 import (
 	"github.com/frontierdigital/ranger/pkg/cmd/app/deploy"
-	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
+	"github.com/frontierdigital/ranger/pkg/util/config"
 
 	"github.com/spf13/cobra"
 )

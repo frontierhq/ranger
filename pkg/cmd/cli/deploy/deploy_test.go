@@ -3,7 +3,7 @@ package deploy
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
+	"github.com/frontierdigital/ranger/pkg/util/config"
 )
 
 func TestNewCmdDeploy(t *testing.T) {

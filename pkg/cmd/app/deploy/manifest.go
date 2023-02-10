@@ -6,7 +6,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
+	"github.com/frontierdigital/ranger/pkg/util/config"
 	"github.com/frontierdigital/ranger/pkg/util/manifest"
 	"github.com/frontierdigital/utils/azuredevops"
 	"github.com/frontierdigital/utils/git"
