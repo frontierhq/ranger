@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/ranger"
-	"github.com/frontierdigital/ranger/pkg/util/output"
+	"github.com/frontierdigital/utils/output"
 )
 
 var (

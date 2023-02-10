@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/app/type/workload"
-	"github.com/frontierdigital/ranger/pkg/util/output"
-	"github.com/frontierdigital/ranger/pkg/util/str"
+	"github.com/frontierdigital/utils/output"
 )
 
 type Manifest struct {
@@ -18,12 +17,12 @@ type Manifest struct {
 
 func (m *Manifest) PrintHeader() {
 	builder := &strings.Builder{}
-	builder.WriteString(fmt.Sprintf("%s\n", str.Repeat("~", 78)))
+	builder.WriteString(fmt.Sprintf("%s\n", strings.Repeat("~", 78)))
 	builder.WriteString(fmt.Sprintf("Manifest     | %s-%s\n", m.Environment, m.Layer))
 	builder.WriteString(fmt.Sprintf("Layer        | %s\n", m.Layer))
 	builder.WriteString(fmt.Sprintf("Environment  | %s\n", m.Environment))
 	builder.WriteString(fmt.Sprintf("Version      | %d\n", m.Version))
-	builder.WriteString(str.Repeat("~", 78))
+	builder.WriteString(strings.Repeat("~", 78))
 	output.Println(builder.String())
 }
 

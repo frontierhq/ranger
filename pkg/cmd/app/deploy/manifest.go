@@ -1,28 +1,23 @@
 package deploy
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/app/type/config"
-	"github.com/frontierdigital/ranger/pkg/cmd/app/type/git"
-	"github.com/frontierdigital/ranger/pkg/util/azure_devops"
 	"github.com/frontierdigital/ranger/pkg/util/manifest"
-	"github.com/frontierdigital/ranger/pkg/util/output"
+	"github.com/frontierdigital/utils/azuredevops"
+	"github.com/frontierdigital/utils/git"
+	"github.com/frontierdigital/utils/output"
 
-	"github.com/microsoft/azure-devops-go-api/azuredevops"
 	"github.com/otiai10/copy"
 	"github.com/segmentio/ksuid"
 )
 
 func DeployManifest(config *config.Config, projectName string, organisationName string) error {
-	organisationUrl := fmt.Sprintf("https://dev.azure.com/%s", organisationName)
-	connection := azuredevops.NewPatConnection(organisationUrl, config.ADO.PAT)
-
-	ctx := context.Background()
+	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
 	manifestFilepath, _ := filepath.Abs("./manifest.yml")
 	manifest, err := manifest.LoadManifest(manifestFilepath)
@@ -40,7 +35,7 @@ func DeployManifest(config *config.Config, projectName string, organisationName 
 		sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
 
 		pipelineName := fmt.Sprintf("%s (deploy)", sourceRepositoryName)
-		pipeline, err := azure_devops.GetPipelineByName(ctx, connection, sourceProjectName, pipelineName)
+		pipeline, err := azureDevOps.GetPipelineByName(sourceProjectName, pipelineName)
 		if err != nil {
 			return err
 		}
@@ -48,7 +43,7 @@ func DeployManifest(config *config.Config, projectName string, organisationName 
 		output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
 			*pipeline.Id, workload.Source, organisationName, projectName, *pipeline.Id)
 
-		repository, err := azure_devops.GetRepositoryByName(ctx, connection, sourceProjectName, sourceRepositoryName)
+		repository, err := azureDevOps.GetRepositoryByName(sourceProjectName, sourceRepositoryName)
 		if err != nil {
 			return err
 		}
@@ -71,7 +66,7 @@ func DeployManifest(config *config.Config, projectName string, organisationName 
 
 		if workloadConfigExists || workloadSecretsExists {
 			configRepoName := "generated-manifest-config"
-			configRepoUrl := fmt.Sprintf("https://frontierdigital@dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
+			configRepoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
 
 			configRepoPath, err := os.MkdirTemp("", "")
 			if err != nil {

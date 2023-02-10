@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/frontierdigital/ranger/pkg/util/output"
-	"github.com/frontierdigital/ranger/pkg/util/str"
+	"github.com/frontierdigital/utils/output"
+	"github.com/frontierdigital/utils/str"
 )
 
 type Workload struct {
