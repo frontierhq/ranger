@@ -3,7 +3,7 @@ module github.com/frontierdigital/ranger
 go 1.19
 
 require (
-	github.com/frontierdigital/utils v0.0.1
+	github.com/frontierdigital/utils v0.0.2-pre
 	github.com/libgit2/git2go/v34 v34.0.0
 	github.com/otiai10/copy v1.9.0
 	github.com/segmentio/ksuid v1.0.4
@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect

@@ -5,16 +5,30 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/frontierdigital/ranger/pkg/util/config"
+	"github.com/frontierdigital/ranger/pkg/util/deploy"
 	"github.com/frontierdigital/ranger/pkg/util/manifest"
+	"github.com/frontierdigital/ranger/pkg/util/workload"
 	"github.com/frontierdigital/utils/azuredevops"
-	"github.com/frontierdigital/utils/git"
+	git "github.com/frontierdigital/utils/git/external_git"
 	"github.com/frontierdigital/utils/output"
 
 	"github.com/otiai10/copy"
 	"github.com/segmentio/ksuid"
 )
+
+const (
+	WaitForBuildAttempts uint = 240
+	WaitForBuildInterval int  = 15
+)
+
+// type Links struct {
+// 	Web struct {
+// 		href string
+// 	}
+// }
 
 func DeployManifest(config *config.Config, projectName string, organisationName string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
@@ -30,104 +44,210 @@ func DeployManifest(config *config.Config, projectName string, organisationName 
 	manifest.PrintWorkloadsSummary()
 
 	for _, workload := range manifest.Workloads {
-		workload.PrintHeader()
+		result := DeployWorkload(*azureDevOps, config, organisationName, projectName, manifest.Environment, manifest.Layer, workload)
 
-		sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
-
-		pipelineName := fmt.Sprintf("%s (deploy)", sourceRepositoryName)
-		pipeline, err := azureDevOps.GetPipelineByName(sourceProjectName, pipelineName)
-		if err != nil {
-			return err
-		}
-
-		output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
-			*pipeline.Id, workload.Source, organisationName, projectName, *pipeline.Id)
-
-		repository, err := azureDevOps.GetRepositoryByName(sourceProjectName, sourceRepositoryName)
-		if err != nil {
-			return err
-		}
-
-		output.PrintlnfInfo("Found repository with Id '%s' for workload '%s' (%s)", repository.Id, workload.Source, *repository.WebUrl)
-
-		workloadConfigPath := path.Join("config", "workloads", workload.Name)
-		workloadConfigExists := true
-		_, err = os.Stat(workloadConfigPath)
-		if err != nil {
-			workloadConfigExists = !os.IsNotExist(err)
-		}
-
-		workloadSecretsPath := path.Join("secrets", "workloads", workload.Name)
-		workloadSecretsExists := true
-		_, err = os.Stat(workloadSecretsPath)
-		if err != nil {
-			workloadSecretsExists = !os.IsNotExist(err)
-		}
-
-		if workloadConfigExists || workloadSecretsExists {
-			configRepoName := "generated-manifest-config"
-			configRepoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
-
-			configRepoPath, err := os.MkdirTemp("", "")
-			if err != nil {
-				return err
-			}
-			configRepo := git.NewGit(configRepoPath)
-			err = configRepo.CloneOverHttp(configRepoUrl, config.ADO.PAT, "x-oauth-basic")
-			if err != nil {
-				return err
-			}
-			err = configRepo.SetConfig("user.email", config.Git.UserEmail)
-			if err != nil {
-				return err
-			}
-			err = configRepo.SetConfig("user.name", config.Git.UserName)
-			if err != nil {
-				return err
-			}
-
-			configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, manifest.Environment, manifest.Layer, ksuid.New().String())
-			err = configRepo.Checkout(configBranchName, true)
-			if err != nil {
-				return err
-			}
-
-			if workloadConfigExists {
-				err = copy.Copy(workloadConfigPath, path.Join(configRepoPath, ".config"))
-				if err != nil {
-					return err
-				}
-			}
-
-			if workloadSecretsExists {
-				err = copy.Copy(workloadSecretsPath, path.Join(configRepoPath, ".secrets"))
-				if err != nil {
-					return err
-				}
-			}
-
-			err = configRepo.AddAll()
-			if err != nil {
-				return err
-			}
-
-			commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and layer '%s'", workload.Name, manifest.Environment, manifest.Layer)
-			err = configRepo.Commit(commitMessage)
-			if err != nil {
-				return err
-			}
-
-			err = configRepo.Push(false)
-			if err != nil {
-				return err
-			}
-
-			output.PrintlnfInfo("Pushed config (https://dev.azure.com/%s/%s/_git/%s?version=GB%s)", organisationName, projectName, configRepoName, configBranchName)
-
-			workload.PrintFooter("", "", "", "")
-			defer os.RemoveAll(configRepoPath)
-		}
+		result.PrintResult()
 	}
 
 	return nil
 }
+
+func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, organisationName string, projectName string, environment string, layer string, workload *workload.Workload) (result *deploy.DeployWorkloadResult) {
+	result = &deploy.DeployWorkloadResult{
+		Workload: workload,
+	}
+
+	workload.PrintHeader()
+
+	sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
+
+	pipelineName := fmt.Sprintf("%s (deploy)", sourceRepositoryName)
+	buildDefinition, err := azureDevOps.GetBuildDefinitionByName(sourceProjectName, pipelineName)
+	if err != nil {
+		result.Error = err
+		return
+	}
+
+	output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+		*buildDefinition.Id, workload.Source, organisationName, projectName, *buildDefinition.Id)
+
+	repository, err := azureDevOps.GetRepositoryByName(sourceProjectName, sourceRepositoryName)
+	if err != nil {
+		result.Error = err
+		return
+	}
+
+	output.PrintlnfInfo("Found repository with Id '%s' for workload '%s' (%s)", repository.Id, workload.Source, *repository.WebUrl)
+
+	workloadConfigPath := path.Join("config", "workloads", workload.Name)
+	workloadConfigExists := true
+	_, err = os.Stat(workloadConfigPath)
+	if err != nil {
+		workloadConfigExists = !os.IsNotExist(err)
+	}
+
+	workloadSecretsPath := path.Join("secrets", "workloads", workload.Name)
+	workloadSecretsExists := true
+	_, err = os.Stat(workloadSecretsPath)
+	if err != nil {
+		workloadSecretsExists = !os.IsNotExist(err)
+	}
+
+	configRepoName := "generated-manifest-config"
+	var configRef string
+
+	if workloadConfigExists || workloadSecretsExists {
+		configRepoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
+
+		configRepoPath, err := os.MkdirTemp("", "")
+		if err != nil {
+			result.Error = err
+			return
+		}
+		configRepo := git.NewGit(configRepoPath)
+		err = configRepo.CloneOverHttp(configRepoUrl, config.ADO.PAT, "x-oauth-basic")
+		if err != nil {
+			result.Error = err
+			return
+		}
+		err = configRepo.SetConfig("user.email", config.Git.UserEmail)
+		if err != nil {
+			result.Error = err
+			return
+		}
+		err = configRepo.SetConfig("user.name", config.Git.UserName)
+		if err != nil {
+			result.Error = err
+			return
+		}
+
+		configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, environment, layer, ksuid.New().String())
+		err = configRepo.Checkout(configBranchName, true)
+		if err != nil {
+			result.Error = err
+			return
+		}
+
+		if workloadConfigExists {
+			err = copy.Copy(workloadConfigPath, path.Join(configRepoPath, ".config"))
+			if err != nil {
+				result.Error = err
+				return
+			}
+		}
+
+		if workloadSecretsExists {
+			err = copy.Copy(workloadSecretsPath, path.Join(configRepoPath, ".secrets"))
+			if err != nil {
+				result.Error = err
+				return
+			}
+		}
+
+		err = configRepo.AddAll()
+		if err != nil {
+			result.Error = err
+			return
+		}
+
+		commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and layer '%s'", workload.Name, environment, layer)
+		commitSha, err := configRepo.Commit(commitMessage)
+		if err != nil {
+			result.Error = err
+			return
+		}
+		_ = commitSha
+
+		err = configRepo.Push(false)
+		if err != nil {
+			result.Error = err
+			return
+		}
+
+		output.PrintlnfInfo("Pushed config (https://dev.azure.com/%s/%s/_git/%s?version=GB%s)", organisationName, projectName, configRepoName, configBranchName)
+
+		configRef = fmt.Sprintf("%s/%s@%s", projectName, configRepoName, commitSha)
+
+		defer os.RemoveAll(configRepoPath)
+	}
+
+	tags := []string{environment, layer}
+
+	templateParameters := map[string]string{
+		"environment": environment,
+		"layer":       layer,
+		"name":        workload.Name,
+		"version":     workload.Version,
+	}
+	if configRef != "" {
+		templateParameters["configRef"] = configRef
+	}
+
+	sourceBranchName := fmt.Sprintf("refs/tags/%s", workload.Version)
+
+	build, err := azureDevOps.QueueBuild(projectName, buildDefinition.Id, sourceBranchName, templateParameters, tags)
+	if err != nil {
+		result.Error = err
+		return
+	}
+	buildLinks := build.Links.(map[string]interface{})
+	buildWebLinks := buildLinks["web"].(map[string]interface{})
+	buildWebLink := buildWebLinks["href"].(string)
+
+	result.Link = buildWebLink
+	result.QueueTime = &build.QueueTime.Time
+
+	output.PrintlnfInfo("Queued build '%s' (%s)", *build.BuildNumber, buildWebLink)
+
+	time.Sleep(time.Duration(WaitForBuildInterval) * time.Second)
+
+	output.PrintlnfInfo("Waiting for build '%s' (%s)", *build.BuildNumber, buildWebLink)
+
+	build, err = azureDevOps.WaitForBuild(projectName, build.Id, WaitForBuildAttempts, WaitForBuildInterval)
+
+	if build.FinishTime != nil {
+		result.FinishTime = &build.FinishTime.Time
+	}
+
+	if err != nil {
+		result.Error = err
+		output.PrintlnfInfo("Build '%s' has not completed (%s)", *build.BuildNumber, buildWebLink)
+		return
+	}
+
+	output.PrintlnfInfo("Build '%s' has completed with result '%s' (%s)", *build.BuildNumber, *build.Result, buildWebLink)
+
+	if *build.Result != "succeeded" {
+		result.Error = fmt.Errorf("build '%d' has result '%s'", *build.Id, *build.Result)
+	}
+
+	return
+}
+
+// func WaitForBuild(azureDevOps *azuredevops.AzureDevOps, projectName string, buildId int) (*build.Build, error) {
+// 	var build *build.Build
+// 	err := retry.Do(
+// 		func() error {
+// 			var err error
+// 			build, err = azureDevOps.GetBuild(projectName, buildId)
+// 			if err != nil {
+// 				return err
+// 			}
+
+// 			switch string(*build.Status) {
+// 			case "completed":
+// 				return nil
+// 			case "postponed":
+// 				return retry.Unrecoverable(fmt.Errorf("build '%s' has been postponed", *build.BuildNumber))
+// 			default:
+// 				return fmt.Errorf("build '%s' has status '%s'", *build.BuildNumber, *build.Status)
+// 			}
+// 		},
+// 		retry.Attempts(BuildCheckAttempts),
+// 		retry.Delay(time.Duration(BuildCheckInterval)*time.Second),
+// 		retry.DelayType(retry.FixedDelay),
+// 		retry.LastErrorOnly(true),
+// 	)
+
+// 	return build, err
+// }

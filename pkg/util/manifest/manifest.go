@@ -25,7 +25,7 @@ func (m *Manifest) PrintHeader() {
 	builder.WriteString(fmt.Sprintf("Layer        | %s\n", m.Layer))
 	builder.WriteString(fmt.Sprintf("Environment  | %s\n", m.Environment))
 	builder.WriteString(fmt.Sprintf("Version      | %d\n", m.Version))
-	builder.WriteString(strings.Repeat("~", 78))
+	builder.WriteString(fmt.Sprintf("%s\n", strings.Repeat("~", 78)))
 	output.Println(builder.String())
 }
 
