@@ -24,12 +24,6 @@ const (
 	WaitForBuildInterval int  = 15
 )
 
-// type Links struct {
-// 	Web struct {
-// 		href string
-// 	}
-// }
-
 func DeployManifest(config *config.Config, projectName string, organisationName string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
@@ -43,41 +37,52 @@ func DeployManifest(config *config.Config, projectName string, organisationName 
 
 	manifest.PrintWorkloadsSummary()
 
+	// var results []*deploy.DeployWorkloadResult
+	var hasErrors bool
 	for _, workload := range manifest.Workloads {
-		result := DeployWorkload(*azureDevOps, config, organisationName, projectName, manifest.Environment, manifest.Layer, workload)
+		result := DeployWorkload(*azureDevOps, config, organisationName, projectName, manifest.Environment, manifest.Set, workload)
+		// results = append(results, result)
 
+		if result.Error != nil {
+			output.PrintfError(result.Error.Error()) // If this is a pipeline validation error we should handle.
+			hasErrors = true
+		}
 		result.PrintResult()
+	}
+
+	if hasErrors {
+		return fmt.Errorf("one or more errors occurred during manifest deploy")
 	}
 
 	return nil
 }
 
-func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, organisationName string, projectName string, environment string, layer string, workload *workload.Workload) (result *deploy.DeployWorkloadResult) {
+func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, organisationName string, projectName string, environment string, set string, workload *workload.Workload) (result *deploy.DeployWorkloadResult) {
 	result = &deploy.DeployWorkloadResult{
 		Workload: workload,
 	}
 
 	workload.PrintHeader()
 
-	sourceProjectName, sourceRepositoryName := workload.GetSourceProjectAndRepositoryNames()
+	typeProjectName, typeRepositoryName := workload.GetTypeProjectAndRepositoryNames()
 
-	pipelineName := fmt.Sprintf("%s (deploy)", sourceRepositoryName)
-	buildDefinition, err := azureDevOps.GetBuildDefinitionByName(sourceProjectName, pipelineName)
+	pipelineName := fmt.Sprintf("%s (deploy)", typeRepositoryName)
+	buildDefinition, err := azureDevOps.GetBuildDefinitionByName(typeProjectName, pipelineName)
 	if err != nil {
 		result.Error = err
 		return
 	}
 
-	output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
-		*buildDefinition.Id, workload.Source, organisationName, projectName, *buildDefinition.Id)
+	output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+		*buildDefinition.Id, workload.Type, organisationName, projectName, *buildDefinition.Id)
 
-	repository, err := azureDevOps.GetRepositoryByName(sourceProjectName, sourceRepositoryName)
+	repository, err := azureDevOps.GetRepositoryByName(typeProjectName, typeRepositoryName)
 	if err != nil {
 		result.Error = err
 		return
 	}
 
-	output.PrintlnfInfo("Found repository with Id '%s' for workload '%s' (%s)", repository.Id, workload.Source, *repository.WebUrl)
+	output.PrintlnfInfo("Found repository with Id '%s' for workload type '%s' (%s)", repository.Id, workload.Type, *repository.WebUrl)
 
 	workloadConfigPath := path.Join("config", "workloads", workload.Name)
 	workloadConfigExists := true
@@ -121,7 +126,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 			return
 		}
 
-		configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, environment, layer, ksuid.New().String())
+		configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, environment, set, ksuid.New().String())
 		err = configRepo.Checkout(configBranchName, true)
 		if err != nil {
 			result.Error = err
@@ -150,7 +155,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 			return
 		}
 
-		commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and layer '%s'", workload.Name, environment, layer)
+		commitMessage := fmt.Sprintf("Generate config for workload '%s', environment '%s' and set '%s'", workload.Name, environment, set)
 		commitSha, err := configRepo.Commit(commitMessage)
 		if err != nil {
 			result.Error = err
@@ -171,12 +176,12 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 		defer os.RemoveAll(configRepoPath)
 	}
 
-	tags := []string{environment, layer}
+	tags := []string{environment, set}
 
 	templateParameters := map[string]string{
 		"environment": environment,
-		"layer":       layer,
 		"name":        workload.Name,
+		"set":         set,
 		"version":     workload.Version,
 	}
 	if configRef != "" {
@@ -223,31 +228,3 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 
 	return
 }
-
-// func WaitForBuild(azureDevOps *azuredevops.AzureDevOps, projectName string, buildId int) (*build.Build, error) {
-// 	var build *build.Build
-// 	err := retry.Do(
-// 		func() error {
-// 			var err error
-// 			build, err = azureDevOps.GetBuild(projectName, buildId)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			switch string(*build.Status) {
-// 			case "completed":
-// 				return nil
-// 			case "postponed":
-// 				return retry.Unrecoverable(fmt.Errorf("build '%s' has been postponed", *build.BuildNumber))
-// 			default:
-// 				return fmt.Errorf("build '%s' has status '%s'", *build.BuildNumber, *build.Status)
-// 			}
-// 		},
-// 		retry.Attempts(BuildCheckAttempts),
-// 		retry.Delay(time.Duration(BuildCheckInterval)*time.Second),
-// 		retry.DelayType(retry.FixedDelay),
-// 		retry.LastErrorOnly(true),
-// 	)
-
-// 	return build, err
-// }
