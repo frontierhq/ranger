@@ -28,7 +28,7 @@ func (d *DeployWorkloadResult) PrintResult() {
 
 	var elasped time.Duration
 	if d.QueueTime != nil && d.FinishTime != nil {
-		elasped = d.FinishTime.Sub(*d.QueueTime) // This needs to be able to be <nil>
+		elasped = d.FinishTime.Sub(*d.QueueTime)
 	}
 
 	builder := &strings.Builder{}
