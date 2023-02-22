@@ -37,14 +37,12 @@ func DeployManifest(config *config.Config, projectName string, organisationName 
 
 	manifest.PrintWorkloadsSummary()
 
-	// var results []*deploy.DeployWorkloadResult
 	var hasErrors bool
 	for _, workload := range manifest.Workloads {
 		result := DeployWorkload(*azureDevOps, config, organisationName, projectName, manifest.Environment, manifest.Set, workload)
-		// results = append(results, result)
 
 		if result.Error != nil {
-			output.PrintfError(result.Error.Error()) // If this is a pipeline validation error we should handle.
+			output.PrintfError(result.Error.Error())
 			hasErrors = true
 		}
 		result.PrintResult()
