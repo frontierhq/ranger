@@ -10,9 +10,18 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     outputs:
+      go_version: ${{ steps.get_go_version.outputs.go_version }}
       version_increment_type: ${{ steps.get_version_increment_type.outputs.version_increment_type }}
     steps:
       - uses: actions/checkout@v3
+      - id: get_go_version
+        name: Get Golang version
+        run: |
+          set -euo pipefail
+
+          go_version=$(sed -n 3p ${GITHUB_WORKSPACE}/go.mod)
+          echo "Golang version: ${go_version}"
+          echo "go_version=$go_version" >> "$GITHUB_OUTPUT"
       - id: get_version_increment_type
         name: Get version increment type
         run: |
@@ -31,7 +40,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: ${{ needs.preflight.outputs.go_version }}
       - run: make build
       - run: make test
       - name: Configure git
