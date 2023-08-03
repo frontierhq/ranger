@@ -19,7 +19,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          go_version=$(sed -n 3p ${GITHUB_WORKSPACE}/go.mod)
+          go_version=$(sed -n 3p ${GITHUB_WORKSPACE}/go.mod | cut -d " " -f2)
           echo "Golang version: ${go_version}"
           echo "go_version=$go_version" >> "$GITHUB_OUTPUT"
       - id: get_version_increment_type
