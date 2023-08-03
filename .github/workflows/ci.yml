@@ -10,19 +10,9 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     outputs:
-      branch_name: ${{ steps.get_branch_name.outputs.branch_name }}
       version_increment_type: ${{ steps.get_version_increment_type.outputs.version_increment_type }}
     steps:
       - uses: actions/checkout@v3
-      - id: get_branch_name
-        name: Get branch name
-        run: |
-          set -euo pipefail
-
-          branch_name="${GITHUB_REF##*/}"
-          echo "Branch name: ${branch_name}"
-          echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
-
       - id: get_version_increment_type
         name: Get version increment type
         run: |
@@ -54,7 +44,6 @@ jobs:
         with:
           scheme: semver
           increment: ${{ needs.preflight.outputs.version_increment_type }}
-          pre-release-label: ${{ (needs.preflight.outputs.branch_name == 'develop') && 'dev' || 'pre' }}
       - name: Add version tag
         if: steps.increment_version.outcome == 'success'
         run: |
