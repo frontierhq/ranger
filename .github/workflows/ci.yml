@@ -35,6 +35,7 @@ jobs:
       - run: make build
       - run: make test
       - name: Configure git
+        if: needs.preflight.outputs.version_increment_type != 'none'
         run: |
           git config --global url."https://x-oauth-basic:${{ secrets.GITHUB_TOKEN }}@github.com/frontierdigital".insteadOf https://github.com/frontierdigital
       - id: increment_version
