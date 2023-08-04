@@ -12,9 +12,10 @@ import (
 )
 
 type Manifest struct {
-	Environment string               `yaml:"environment"`
-	Set         string               `yaml:"set"`
 	Version     int64                `yaml:"version"`
+	Environment string               `yaml:"environment"`
+	FilePath    string               `yaml:"-"`
+	Set         string               `yaml:"set"`
 	Workloads   []*workload.Workload `yaml:"workloads"`
 }
 
@@ -37,10 +38,33 @@ func (m *Manifest) PrintWorkloadsSummary() {
 	output.Println(builder.String())
 }
 
-func LoadManifest(path string) (Manifest, error) {
+func (m *Manifest) Save() error {
+	data, err := yaml.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	builder := &strings.Builder{}
+	builder.WriteString("---\n")
+	builder.WriteString(string(data[:]))
+
+	file, err := os.Create(m.FilePath)
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprint(file, builder.String())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadManifest(filePath string) (Manifest, error) {
 	manifest := Manifest{}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return manifest, err
 	}
@@ -49,6 +73,8 @@ func LoadManifest(path string) (Manifest, error) {
 	if err != nil {
 		return manifest, err
 	}
+
+	manifest.FilePath = filePath
 
 	return manifest, nil
 }

@@ -74,7 +74,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 	output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
 		*buildDefinition.Id, workload.Type, organisationName, projectName, *buildDefinition.Id)
 
-	repository, err := azureDevOps.GetRepositoryByName(typeProjectName, typeRepositoryName)
+	repository, err := azureDevOps.GetRepository(typeProjectName, typeRepositoryName)
 	if err != nil {
 		result.Error = err
 		return
@@ -132,7 +132,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 		}
 
 		if workloadConfigExists {
-			err = copy.Copy(workloadConfigPath, path.Join(configRepoPath, ".config"))
+			err = copy.Copy(workloadConfigPath, path.Join(configRepo.GetRepositoryPath(), ".config"))
 			if err != nil {
 				result.Error = err
 				return
@@ -140,7 +140,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 		}
 
 		if workloadSecretsExists {
-			err = copy.Copy(workloadSecretsPath, path.Join(configRepoPath, ".secrets"))
+			err = copy.Copy(workloadSecretsPath, path.Join(configRepo.GetRepositoryPath(), ".secrets"))
 			if err != nil {
 				result.Error = err
 				return
@@ -159,7 +159,6 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 			result.Error = err
 			return
 		}
-		_ = commitSha
 
 		err = configRepo.Push(false)
 		if err != nil {
@@ -171,7 +170,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 
 		configRef = fmt.Sprintf("%s/%s@%s", projectName, configRepoName, commitSha)
 
-		defer os.RemoveAll(configRepoPath)
+		defer os.RemoveAll(configRepo.GetRepositoryPath())
 	}
 
 	tags := []string{environment, set}
