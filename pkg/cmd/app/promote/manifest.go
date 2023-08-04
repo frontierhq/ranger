@@ -105,7 +105,5 @@ func PromoteManifest(config *config.Config, projectName string, organisationName
 
 	output.PrintfInfo("Created pull request with Id '%d' (https://dev.azure.com/%s/%s/_git/%s/pullrequest/%d)", *pullRequest.PullRequestId, organisationName, projectName, targetEnvironmentSetRepoName, *pullRequest.PullRequestId)
 
-	_ = pullRequest
-
 	return nil
 }
