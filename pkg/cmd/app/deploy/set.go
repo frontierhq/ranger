@@ -24,7 +24,7 @@ const (
 	WaitForBuildInterval int  = 15
 )
 
-func DeployManifest(config *config.Config, projectName string, organisationName string) error {
+func DeploySet(config *config.Config, projectName string, organisationName string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
 	manifestFilepath, _ := filepath.Abs("./manifest.yml")

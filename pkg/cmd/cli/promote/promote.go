@@ -13,7 +13,7 @@ func NewCmdPromote(config *config.Config) *cobra.Command {
 		Short: "Promote an artifact",
 	}
 
-	cmd.AddCommand(NewCmdPromoteManifest(config))
+	cmd.AddCommand(NewCmdPromoteSet(config))
 
 	return cmd
 }

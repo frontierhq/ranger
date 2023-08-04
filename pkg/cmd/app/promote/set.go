@@ -12,7 +12,7 @@ import (
 	"github.com/frontierdigital/utils/output"
 )
 
-func PromoteManifest(config *config.Config, projectName string, organisationName string, targetEnvironment string) error {
+func PromoteSet(config *config.Config, projectName string, organisationName string, targetEnvironment string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
 	sourceManifestFilepath, _ := filepath.Abs("./manifest.yml")
@@ -46,7 +46,7 @@ func PromoteManifest(config *config.Config, projectName string, organisationName
 		return err
 	}
 
-	output.PrintfInfo("Cloned target environment set repo '%s' (https://dev.azure.com/%s/%s/_git/%s)", targetEnvironmentSetRepoName, organisationName, projectName, targetEnvironmentSetRepoName)
+	output.PrintfInfo("Cloned target environment set repository '%s' (https://dev.azure.com/%s/%s/_git/%s)", targetEnvironmentSetRepoName, organisationName, projectName, targetEnvironmentSetRepoName)
 
 	promoteBranchName := fmt.Sprintf("ranger/promote/%s", sourceManifest.Environment)
 	err = targetEnvironmentSetRepo.Checkout(promoteBranchName, true)
@@ -70,7 +70,7 @@ func PromoteManifest(config *config.Config, projectName string, organisationName
 		return err
 	}
 
-	commitMessage := fmt.Sprintf("Promote manifest version %d from %s", sourceManifest.Version, sourceManifest.Environment)
+	commitMessage := fmt.Sprintf("Promote set version %d from %s", sourceManifest.Version, sourceManifest.Environment)
 	_, err = targetEnvironmentSetRepo.Commit(commitMessage)
 	if err != nil {
 		return err

@@ -13,13 +13,13 @@ var (
 	orgName           = ""
 )
 
-// NewCmdPromoteManifest creates a command to promote a manifest
-func NewCmdPromoteManifest(config *config.Config) *cobra.Command {
+// NewCmdPromoteSet creates a command to promote a set
+func NewCmdPromoteSet(config *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "manifest",
-		Short: "Promote a manifest",
+		Use:   "set",
+		Short: "Promote a set",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := promote.PromoteManifest(config, projectName, orgName, targetEnvironment); err != nil {
+			if err := promote.PromoteSet(config, projectName, orgName, targetEnvironment); err != nil {
 				return err
 			}
 

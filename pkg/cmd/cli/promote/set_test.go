@@ -6,11 +6,11 @@ import (
 	"github.com/frontierdigital/ranger/pkg/util/config"
 )
 
-func TestNewCmdPromote(t *testing.T) {
+func TestNewCmdPromoteSet(t *testing.T) {
 	config := config.Config{}
-	cmd := NewCmdPromote(&config)
+	cmd := NewCmdPromoteSet(&config)
 
-	if cmd.Use != "promote" {
+	if cmd.Use != "set" {
 		t.Errorf("Use is not correct")
 	}
 }

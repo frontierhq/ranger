@@ -6,11 +6,11 @@ import (
 	"github.com/frontierdigital/ranger/pkg/util/config"
 )
 
-func TestNewCmdDeployManifest(t *testing.T) {
+func TestNewCmdDeploySet(t *testing.T) {
 	config := config.Config{}
-	cmd := NewCmdDeployManifest(&config)
+	cmd := NewCmdDeploySet(&config)
 
-	if cmd.Use != "manifest" {
+	if cmd.Use != "set" {
 		t.Errorf("Use is not correct")
 	}
 }
