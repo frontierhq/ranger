@@ -12,13 +12,13 @@ var (
 	orgName     = ""
 )
 
-// NewCmdDeployManifest creates a command to deploy a manifest
-func NewCmdDeployManifest(config *config.Config) *cobra.Command {
+// NewCmdDeploySet creates a command to deploy a set
+func NewCmdDeploySet(config *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "manifest",
-		Short: "Deploy a manifest",
+		Use:   "set",
+		Short: "Deploy a set",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := deploy.DeployManifest(config, projectName, orgName); err != nil {
+			if err := deploy.DeploySet(config, projectName, orgName); err != nil {
 				return err
 			}
 

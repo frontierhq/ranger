@@ -13,7 +13,7 @@ func NewCmdDeploy(config *config.Config) *cobra.Command {
 		Short: "Deploy an artifact",
 	}
 
-	cmd.AddCommand(NewCmdDeployManifest(config))
+	cmd.AddCommand(NewCmdDeploySet(config))
 
 	return cmd
 }

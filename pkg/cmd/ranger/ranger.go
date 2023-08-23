@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/frontierdigital/ranger/pkg/cmd/cli/deploy"
+	"github.com/frontierdigital/ranger/pkg/cmd/cli/promote"
 	vers "github.com/frontierdigital/ranger/pkg/cmd/cli/version"
 	"github.com/frontierdigital/ranger/pkg/util/config"
 	"github.com/frontierdigital/utils/output"
@@ -25,6 +26,7 @@ func NewRootCmd(version string, commit string, date string) *cobra.Command {
 	}
 
 	cmd.AddCommand(deploy.NewCmdDeploy(config))
+	cmd.AddCommand(promote.NewCmdPromote(config))
 	cmd.AddCommand(vers.NewCmdVersion(version, commit, date))
 
 	return cmd
