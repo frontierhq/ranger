@@ -49,7 +49,7 @@ func DeploySet(config *config.Config, projectName string, organisationName strin
 	}
 
 	if hasErrors {
-		return fmt.Errorf("one or more errors occurred during manifest deploy")
+		return fmt.Errorf("one or more errors occurred during set deploy")
 	}
 
 	return nil
@@ -96,7 +96,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 		workloadSecretsExists = !os.IsNotExist(err)
 	}
 
-	configRepoName := "generated-manifest-config"
+	configRepoName := "generated-set-config"
 	var configRef string
 
 	if workloadConfigExists || workloadSecretsExists {
@@ -176,10 +176,9 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 	tags := []string{environment, set}
 
 	templateParameters := map[string]string{
-		"environment": environment,
-		"name":        workload.Name,
-		"set":         set,
-		"version":     workload.Version,
+		"environment":  environment,
+		"set":          set,
+		"workloadName": workload.Name,
 	}
 	if configRef != "" {
 		templateParameters["configRef"] = configRef
