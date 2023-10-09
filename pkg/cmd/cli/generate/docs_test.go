@@ -10,7 +10,7 @@ func TestNewCmdGenerateDocs(t *testing.T) {
 	config := config.Config{}
 	cmd := NewCmdGenerateDocs(&config)
 
-	if cmd.Use != "generate" {
+	if cmd.Use != "docs" {
 		t.Errorf("Use is not correct")
 	}
 }
