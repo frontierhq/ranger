@@ -9,9 +9,15 @@ import (
 )
 
 type Workload struct {
-	Name    string `yaml:"name"`
-	Type    string `yaml:"type"`
-	Version string `yaml:"version"`
+	ExtraParameters []ExtraParameter `yaml:"extraParameters"`
+	Name            string           `yaml:"name"`
+	Type            string           `yaml:"type"`
+	Version         string           `yaml:"version"`
+}
+
+type ExtraParameter struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 func (w *Workload) GetTypeProjectAndRepositoryNames() (string, string) {

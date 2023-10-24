@@ -183,10 +183,13 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 	if configRef != "" {
 		templateParameters["configRef"] = configRef
 	}
+	for _, v := range workload.ExtraParameters {
+		templateParameters[v.Name] = v.Value
+	}
 
 	sourceBranchName := fmt.Sprintf("refs/tags/%s", workload.Version)
 
-	build, err := azureDevOps.QueueBuild(projectName, buildDefinition.Id, sourceBranchName, templateParameters, tags)
+	build, err := azureDevOps.QueueBuild(typeProjectName, buildDefinition.Id, sourceBranchName, templateParameters, tags)
 	if err != nil {
 		result.Error = err
 		return
@@ -204,7 +207,17 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *config.Config, 
 
 	output.PrintlnfInfo("Waiting for build '%s' (%s)", *build.BuildNumber, buildWebLink)
 
-	build, err = azureDevOps.WaitForBuild(projectName, build.Id, WaitForBuildAttempts, WaitForBuildInterval)
+	err = azureDevOps.WaitForBuild(typeProjectName, build.Id, WaitForBuildAttempts, WaitForBuildInterval)
+	if err != nil {
+		result.Error = err
+		return
+	}
+
+	build, err = azureDevOps.GetBuild(typeProjectName, build.Id)
+	if err != nil {
+		result.Error = err
+		return
+	}
 
 	if build.FinishTime != nil {
 		result.FinishTime = &build.FinishTime.Time
