@@ -10,6 +10,8 @@ import (
 var (
 	projectName = ""
 	orgName     = ""
+	wikiName    = ""
+	feedName    = ""
 )
 
 // NewCmdGenerateDocs creates a command to deploy a set
@@ -18,7 +20,7 @@ func NewCmdGenerateDocs(config *config.Config) *cobra.Command {
 		Use:   "docs",
 		Short: "documentation",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := generate.GenerateDocs(config, projectName, orgName); err != nil {
+			if err := generate.GenerateDocs(config, projectName, orgName, wikiName, feedName); err != nil {
 				return err
 			}
 
@@ -28,6 +30,8 @@ func NewCmdGenerateDocs(config *config.Config) *cobra.Command {
 
 	cmd.Flags().StringVarP(&projectName, "project-name", "p", "", "Project name")
 	cmd.Flags().StringVarP(&orgName, "organisation-name", "o", "", "Organisation name")
+	cmd.Flags().StringVarP(&wikiName, "wiki-name", "w", "", "Repository name the stores the wiki docs")
+	cmd.Flags().StringVarP(&feedName, "feed-name", "f", "", "ADO artifact feed name")
 
 	return cmd
 }
