@@ -86,7 +86,6 @@ func GenerateDocs(config *config.Config, projectName string, organisationName st
 		if len(*p.Versions) > 0 {
 			c, _ := azureDevOps.GetFileContent(projectName, *p.Name, *(*p.Versions)[0].Version)
 			fullPath := filepath.Join(*localPath, "workloads", fmt.Sprintf("%s.md", *p.Name))
-			// orderPath := filepath.Join(*localPath, "workloads", ".order")
 			err := rfile.CreateOrUpdate(fullPath, *c.Content, false)
 			if err != nil {
 				return errors.New("Could not create or update page")
