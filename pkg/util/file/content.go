@@ -33,10 +33,14 @@ func CreateOrUpdate(fullPath string, content string, append bool) error {
 }
 
 func Clear(fullPath string) error {
-	err := os.Remove(fullPath)
-	if err != nil {
+	if _, err := os.Stat(fullPath); err == nil {
+		// If the file exists, remove it
+		return os.Remove(fullPath)
+	} else if os.IsNotExist(err) {
+		// If the file does not exist, return nil
+		return nil
+	} else {
+		// If there is another error, return it
 		return err
 	}
-
-	return nil
 }
