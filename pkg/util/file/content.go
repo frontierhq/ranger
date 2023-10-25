@@ -33,10 +33,11 @@ func CreateOrUpdate(fullPath string, content string, append bool) error {
 }
 
 func Clear(fullPath string) error {
-	err := os.Remove(fullPath)
-	if err != nil {
+	if _, err := os.Stat(fullPath); err == nil {
+		return os.Remove(fullPath)
+	} else if os.IsNotExist(err) {
+		return nil
+	} else {
 		return err
 	}
-
-	return nil
 }
