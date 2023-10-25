@@ -4,6 +4,6 @@
 
 | Name | Instances | Latest version | Latest build |
 |:-----------|:-----------|:-----------|:-----------|
-{{ range .Workloads }}
+{{- range .Workloads }}
 | {{ .Name }} | {{ .Instances }} | {{ .Version }} | {{ .Build }} |
-{{ end }}
+{{- end }}

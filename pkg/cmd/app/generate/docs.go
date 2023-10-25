@@ -12,7 +12,6 @@ import (
 	"github.com/frontierdigital/ranger/pkg/util/config"
 	rfile "github.com/frontierdigital/ranger/pkg/util/file"
 	rtime "github.com/frontierdigital/ranger/pkg/util/time"
-	"github.com/frontierdigital/utils/azuredevops"
 	egit "github.com/frontierdigital/utils/git/external_git"
 	"github.com/frontierdigital/utils/output"
 )
@@ -26,8 +25,8 @@ type Workload struct {
 	Build   string
 }
 
-func publish(a *azuredevops.AzureDevOps, projectName string, repositoryName string, repoPath string) error {
-	repo := egit.NewGit(repoPath)
+func publish(ado *core.AzureDevOps) error {
+	repo := egit.NewGit(ado.WikiRepo.LocalPath)
 	hasChanges, err := repo.HasChanges()
 	if err != nil {
 		return err
@@ -60,17 +59,20 @@ func publish(a *azuredevops.AzureDevOps, projectName string, repositoryName stri
 
 		output.PrintlnfInfo("Pushed.")
 
-		pr, err := a.CreatePullRequest(projectName, repositoryName, fmt.Sprintf("refs/heads/%s", branchName), "refs/heads/main", "Update docs "+us)
+		prId, err := ado.CreatePullRequest(branchName, "Update docs "+us)
 		if err != nil {
 			return err
 		}
 
-		identityId, err := a.GetIdentityId()
+		identityId, err := ado.GetIdentityId()
 		if err != nil {
 			return err
 		}
 
-		err = a.SetPullRequestAutoComplete(projectName, repositoryName, *pr.PullRequestId, identityId)
+		err = ado.SetPullRequestAutoComplete(prId, identityId)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -165,7 +167,7 @@ func GenerateDocs(config *config.Config, projectName string, organisationName st
 
 	output.Println(ado.WikiRepo.LocalPath)
 
-	err = publish(azureDevOps, projectName, repoName, *localPath)
+	err = publish(ado)
 	if err != nil {
 		return errors.New("Could not create or automerge PR")
 	}
