@@ -3,11 +3,11 @@ package deploy
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/util/config"
+	"github.com/frontierdigital/ranger/pkg/core"
 )
 
 func TestNewCmdDeploySet(t *testing.T) {
-	config := config.Config{}
+	config := core.Config{}
 	cmd := NewCmdDeploySet(&config)
 
 	if cmd.Use != "set" {

@@ -1,4 +1,4 @@
-package workload
+package core
 
 import (
 	"fmt"
@@ -8,24 +8,12 @@ import (
 	"github.com/frontierdigital/utils/str"
 )
 
-type Workload struct {
-	ExtraParameters []ExtraParameter `yaml:"extraParameters"`
-	Name            string           `yaml:"name"`
-	Type            string           `yaml:"type"`
-	Version         string           `yaml:"version"`
-}
-
-type ExtraParameter struct {
-	Name  string `yaml:"name"`
-	Value string `yaml:"value"`
-}
-
-func (w *Workload) GetTypeProjectAndRepositoryNames() (string, string) {
+func (w *WorkloadInstance) GetTypeProjectAndRepositoryNames() (string, string) {
 	typeParts := strings.Split(w.Type, "/")
 	return typeParts[0], typeParts[1]
 }
 
-func (w *Workload) PrintHeader() {
+func (w *WorkloadInstance) PrintHeader() {
 	builder := &strings.Builder{}
 	builder.WriteString(fmt.Sprintf("%s\n", str.Repeat("=", 78)))
 	builder.WriteString(fmt.Sprintf("Name     | %s\n", w.Name))

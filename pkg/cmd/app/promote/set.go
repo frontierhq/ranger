@@ -5,18 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/frontierdigital/ranger/pkg/util/config"
-	"github.com/frontierdigital/ranger/pkg/util/manifest"
+	"github.com/frontierdigital/ranger/pkg/core"
 	"github.com/frontierdigital/utils/azuredevops"
 	git "github.com/frontierdigital/utils/git/external_git"
 	"github.com/frontierdigital/utils/output"
 )
 
-func PromoteSet(config *config.Config, projectName string, organisationName string, nextEnvironment string) error {
+func PromoteSet(config *core.Config, projectName string, organisationName string, nextEnvironment string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
 	sourceManifestFilepath, _ := filepath.Abs("./manifest.yml")
-	sourceManifest, err := manifest.LoadManifest(sourceManifestFilepath)
+	sourceManifest, err := core.LoadManifest(sourceManifestFilepath)
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func PromoteSet(config *config.Config, projectName string, organisationName stri
 	}
 
 	targetManifestFilePath := nextEnvironmentSetRepo.GetFilePath("manifest.yml")
-	targetManifest, err := manifest.LoadManifest(targetManifestFilePath)
+	targetManifest, err := core.LoadManifest(targetManifestFilePath)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
-package deploy
+package destroy
 
 import (
-	"github.com/frontierdigital/ranger/pkg/cmd/app/deploy"
+	"github.com/frontierdigital/ranger/pkg/cmd/app/destroy"
 	"github.com/frontierdigital/ranger/pkg/core"
 
 	"github.com/spf13/cobra"
@@ -12,13 +12,13 @@ var (
 	orgName     = ""
 )
 
-// NewCmdDeploySet creates a command to deploy a set
-func NewCmdDeploySet(config *core.Config) *cobra.Command {
+// NewCmdDestroySet creates a command to destroy a set
+func NewCmdDestroySet(config *core.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
-		Short: "Deploy a set",
+		Short: "Destroy a set",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := deploy.DeploySet(config, projectName, orgName); err != nil {
+			if err := destroy.DestroySet(config, projectName, orgName); err != nil {
 				return err
 			}
 

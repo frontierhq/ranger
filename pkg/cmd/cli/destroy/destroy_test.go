@@ -1,4 +1,4 @@
-package deploy
+package destroy
 
 import (
 	"testing"
@@ -6,11 +6,11 @@ import (
 	"github.com/frontierdigital/ranger/pkg/core"
 )
 
-func TestNewCmdDeploy(t *testing.T) {
+func TestNewCmdDestroy(t *testing.T) {
 	config := core.Config{}
-	cmd := NewCmdDeploy(&config)
+	cmd := NewCmdDestroy(&config)
 
-	if cmd.Use != "deploy" {
+	if cmd.Use != "destroy" {
 		t.Errorf("Use is not correct")
 	}
 }

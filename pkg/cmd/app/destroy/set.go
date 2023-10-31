@@ -1,4 +1,4 @@
-package deploy
+package destroy
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ const (
 	WaitForBuildInterval int  = 15
 )
 
-func DeploySet(config *core.Config, projectName string, organisationName string) error {
+func DestroySet(config *core.Config, projectName string, organisationName string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
 	manifestFilepath, _ := filepath.Abs("./manifest.yml")
@@ -29,13 +29,15 @@ func DeploySet(config *core.Config, projectName string, organisationName string)
 
 	manifest.PrintWorkloadsSummary()
 
-	output.PrintfInfo("Action: Deploy\n\n")
+	output.PrintfInfo("Action: Destroy (in reverse order)\n\n")
 
 	var hasErrors bool
-	for _, workloadInstance := range manifest.Workloads {
+	for i := len(manifest.Workloads) - 1; i >= 0; i-- {
+		workloadInstance := manifest.Workloads[i]
+
 		workloadInstance.PrintHeader()
 
-		result := DeployWorkload(*azureDevOps, config, projectName, organisationName, manifest.Environment, manifest.Set, workloadInstance)
+		result := DestroyWorkload(*azureDevOps, config, projectName, organisationName, manifest.Environment, manifest.Set, workloadInstance)
 		if result.Error != nil {
 			output.PrintfError(result.Error.Error())
 			hasErrors = true
@@ -45,27 +47,36 @@ func DeploySet(config *core.Config, projectName string, organisationName string)
 	}
 
 	if hasErrors {
-		return fmt.Errorf("one or more errors occurred during set deploy")
+		return fmt.Errorf("one or more errors occurred during set destroy")
 	}
 
 	return nil
 }
 
-func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, projectName string, organisationName string, environment string, set string, workloadInstance *core.WorkloadInstance) (result *core.WorkloadResult) {
+func DestroyWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, projectName string, organisationName string, environment string, set string, workloadInstance *core.WorkloadInstance) (result *core.WorkloadResult) {
 	result = &core.WorkloadResult{
 		Workload: workloadInstance,
 	}
 
+	if workloadInstance.PreventDestroy {
+		output.PrintlnfInfo("Instance configuration prevents destroy; skipping")
+		now := time.Now()
+		result.Link = "N/A"
+		result.QueueTime = &now
+		result.FinishTime = &now
+		return
+	}
+
 	typeProjectName, typeRepositoryName := workloadInstance.GetTypeProjectAndRepositoryNames()
 
-	pipelineName := fmt.Sprintf("%s (deploy)", typeRepositoryName)
+	pipelineName := fmt.Sprintf("%s (destroy)", typeRepositoryName)
 	buildDefinition, err := azureDevOps.GetBuildDefinitionByName(typeProjectName, pipelineName)
 	if err != nil {
 		result.Error = err
 		return
 	}
 
-	output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+	output.PrintlnfInfo("Found destroy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
 		*buildDefinition.Id, workloadInstance.Type, organisationName, projectName, *buildDefinition.Id)
 
 	repository, err := azureDevOps.GetRepository(typeProjectName, typeRepositoryName)

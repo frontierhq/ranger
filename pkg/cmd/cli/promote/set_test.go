@@ -3,11 +3,11 @@ package promote
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/util/config"
+	"github.com/frontierdigital/ranger/pkg/core"
 )
 
 func TestNewCmdPromoteSet(t *testing.T) {
-	config := config.Config{}
+	config := core.Config{}
 	cmd := NewCmdPromoteSet(&config)
 
 	if cmd.Use != "set" {
