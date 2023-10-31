@@ -2,7 +2,7 @@ package promote
 
 import (
 	"github.com/frontierdigital/ranger/pkg/cmd/app/promote"
-	"github.com/frontierdigital/ranger/pkg/util/config"
+	"github.com/frontierdigital/ranger/pkg/core"
 
 	"github.com/spf13/cobra"
 )
@@ -14,7 +14,7 @@ var (
 )
 
 // NewCmdPromoteSet creates a command to promote a set
-func NewCmdPromoteSet(config *config.Config) *cobra.Command {
+func NewCmdPromoteSet(config *core.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Promote a set",

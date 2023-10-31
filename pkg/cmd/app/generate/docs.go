@@ -9,7 +9,6 @@ import (
 	"text/template"
 
 	"github.com/frontierdigital/ranger/pkg/core"
-	"github.com/frontierdigital/ranger/pkg/util/config"
 	rfile "github.com/frontierdigital/ranger/pkg/util/file"
 	rtime "github.com/frontierdigital/ranger/pkg/util/time"
 	egit "github.com/frontierdigital/utils/git/external_git"
@@ -136,7 +135,7 @@ func (*Workload) GetTemplate() string {
 	return workloadTemplate
 }
 
-func GenerateDocs(config *config.Config, projectName string, organisationName string, repoName string, feedName string) error {
+func GenerateDocs(config *core.Config, projectName string, organisationName string, repoName string, feedName string) error {
 	ado := &core.AzureDevOps{
 		OrganisationName: organisationName,
 		ProjectName:      projectName,

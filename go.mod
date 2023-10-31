@@ -2,6 +2,8 @@ module github.com/frontierdigital/ranger
 
 go 1.20
 
+replace github.com/frontierdigital/utils => ../utils
+
 require (
 	github.com/frontierdigital/utils v0.0.6
 	github.com/otiai10/copy v1.9.0

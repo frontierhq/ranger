@@ -2,7 +2,7 @@ package generate
 
 import (
 	"github.com/frontierdigital/ranger/pkg/cmd/app/generate"
-	"github.com/frontierdigital/ranger/pkg/util/config"
+	"github.com/frontierdigital/ranger/pkg/core"
 
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ var (
 )
 
 // NewCmdGenerateDocs creates a command to deploy a set
-func NewCmdGenerateDocs(config *config.Config) *cobra.Command {
+func NewCmdGenerateDocs(config *core.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "docs",
 		Short: "documentation",

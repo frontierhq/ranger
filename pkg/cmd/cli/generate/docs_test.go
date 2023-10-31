@@ -3,11 +3,11 @@ package generate
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/util/config"
+	"github.com/frontierdigital/ranger/pkg/core"
 )
 
 func TestNewCmdGenerateDocs(t *testing.T) {
-	config := config.Config{}
+	config := core.Config{}
 	cmd := NewCmdGenerateDocs(&config)
 
 	if cmd.Use != "docs" {

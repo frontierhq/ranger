@@ -1,23 +1,13 @@
-package manifest
+package core
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/frontierdigital/ranger/pkg/util/workload"
 	"github.com/frontierdigital/utils/output"
-
 	"gopkg.in/yaml.v2"
 )
-
-type Manifest struct {
-	Version     int64                `yaml:"version"`
-	Environment string               `yaml:"environment"`
-	FilePath    string               `yaml:"-"`
-	Set         string               `yaml:"set"`
-	Workloads   []*workload.Workload `yaml:"workloads"`
-}
 
 func (m *Manifest) PrintHeader() {
 	builder := &strings.Builder{}

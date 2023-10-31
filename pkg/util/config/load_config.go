@@ -3,24 +3,11 @@ package config
 import (
 	"strings"
 
+	"github.com/frontierdigital/ranger/pkg/core"
 	"github.com/spf13/viper"
 )
 
-type Config struct {
-	ADO ADOConfig `mapstructure:"ADO"`
-	Git GitConfig `mapstructure:"Git"`
-}
-
-type ADOConfig struct {
-	PAT string `mapstructure:"PAT"`
-}
-
-type GitConfig struct {
-	UserEmail string `mapstructure:"UserEmail"`
-	UserName  string `mapstructure:"UserName"`
-}
-
-func LoadConfig() (config *Config, err error) {
+func LoadConfig() (config *core.Config, err error) {
 	viper.SetEnvPrefix("RANGER")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
