@@ -46,6 +46,14 @@ type Manifest struct {
 	Workloads   []*WorkloadInstance `yaml:"workloads"`
 }
 
+type Set struct {
+	Name       string
+	Envronment string
+	Next       *Set
+	Previous   *Set
+	Manifest   *Manifest
+}
+
 type Workload struct {
 	Name      string
 	Version   string

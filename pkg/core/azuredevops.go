@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/frontierdigital/utils/azuredevops"
 	"github.com/google/uuid"
@@ -70,4 +71,21 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 	}
 
 	return &workloads, nil
+}
+
+func (ado *AzureDevOps) GetSets() (*[]Set, error) {
+	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
+	var sets []Set
+	repos, err := azureDevOps.GetRepositories(ado.ProjectName)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range *repos {
+		if strings.HasSuffix(*r.Name, "-set") {
+			sets = append(sets, Set{
+				Name: *r.Name,
+			})
+		}
+	}
+	return &sets, nil
 }
