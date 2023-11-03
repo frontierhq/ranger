@@ -47,11 +47,11 @@ type Manifest struct {
 }
 
 type Set struct {
-	Name       string
-	Envronment string
-	Next       *Set
-	Previous   *Set
-	Manifest   *Manifest
+	Name        string
+	Environment string
+	Next        *Set
+	Previous    *Set
+	Manifest    *Manifest
 }
 
 type Workload struct {
