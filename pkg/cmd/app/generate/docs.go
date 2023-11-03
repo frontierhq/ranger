@@ -83,7 +83,7 @@ type WikiContent struct {
 	Workloads []core.Workload
 }
 
-func processTemplateFile(src string, tgt string, localPath string, wikiContent *WikiContent) error {
+func processTemplateFile(src string, tgt string, localPath string, wikiContent interface{}) error {
 	tmpl, err := template.New(path.Base(src)).ParseFS(wikiTemplates, src)
 	if err != nil {
 		return err
@@ -102,42 +102,21 @@ func processTemplateFile(src string, tgt string, localPath string, wikiContent *
 	return nil
 }
 
-func processTemplateFileWorkload(src string, tgt string, localPath string, workload *core.Workload) error {
-	tmpl, err := template.New(path.Base(src)).ParseFS(wikiTemplates, src)
-	if err != nil {
-		return err
-	}
-	var f *os.File
-	f, err = os.Create(filepath.Join(localPath, tgt))
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	err = tmpl.Execute(f, workload)
-	if err != nil {
-		panic(err)
-	}
-	return nil
-}
-
 func writeWiki(wikiContent *WikiContent, localPath string) error {
 	fs.WalkDir(wikiTemplates, "tpl", func(src string, d fs.DirEntry, err error) error {
-		if src == "tpl/workloads/workload.tpl" {
+		if src == "tpl/workloads/workload.md.tpl" {
 			for _, w := range wikiContent.Workloads {
 				tgt := "workloads/" + w.Name + ".md"
-				terr := processTemplateFileWorkload(src, tgt, localPath, &w)
+				terr := processTemplateFile(src, tgt, localPath, &w)
 				if terr != nil {
 					return nil
 				}
 			}
 		}
-		if !d.IsDir() && src != "tpl/workloads/workload.tpl" {
+
+		if !d.IsDir() && src != "tpl/workloads/workload.md.tpl" {
 			tgt := strings.Replace(src, "tpl"+string(os.PathSeparator), "", 1)
-			tgt = strings.Replace(tgt, ".tpl", ".md", 1)
-			if strings.HasSuffix(tgt, "order.md") {
-				tgt = strings.ReplaceAll(tgt, "order.md", ".order")
-			}
+			tgt = strings.ReplaceAll(tgt, ".tpl", "")
 			terr := processTemplateFile(src, tgt, localPath, wikiContent)
 			if terr != nil {
 				return terr

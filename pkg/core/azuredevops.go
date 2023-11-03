@@ -86,9 +86,18 @@ func (ado *AzureDevOps) GetSets() (*[]Set, error) {
 			n := strings.ReplaceAll(*r.Name, "-set", "")
 			re := regexp.MustCompile(`^.+?-`)
 			n = re.ReplaceAllString(n, "")
-			sets = append(sets, Set{
-				Name: n,
-			})
+
+			exists := false
+			for _, v := range sets {
+				if v.Name == n {
+					exists = true
+				}
+			}
+			if !exists {
+				sets = append(sets, Set{
+					Name: n,
+				})
+			}
 		}
 	}
 	return &sets, nil
