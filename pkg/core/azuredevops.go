@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/frontierdigital/utils/azuredevops"
@@ -61,7 +62,7 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 		if len(*p.Versions) > 0 {
 			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version)
 			workloads = append(workloads, Workload{
-				Name:    *p.Name,
+				Name:    strings.ReplaceAll(*p.Name, "-workload", ""),
 				Version: *(*p.Versions)[0].Version,
 				Build:   "N/A",
 				Readme:  *c.Content,
@@ -82,8 +83,11 @@ func (ado *AzureDevOps) GetSets() (*[]Set, error) {
 	}
 	for _, r := range *repos {
 		if strings.HasSuffix(*r.Name, "-set") {
+			n := strings.ReplaceAll(*r.Name, "-set", "")
+			re := regexp.MustCompile(`^.+?-`)
+			n = re.ReplaceAllString(n, "")
 			sets = append(sets, Set{
-				Name: *r.Name,
+				Name: n,
 			})
 		}
 	}

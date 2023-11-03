@@ -1,0 +1,3 @@
+{{- range .Workloads }}
+{{ .Name }}
+{{- end }}

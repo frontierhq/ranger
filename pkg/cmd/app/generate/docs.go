@@ -83,25 +83,64 @@ type WikiContent struct {
 	Workloads []core.Workload
 }
 
+func processTemplateFile(src string, tgt string, localPath string, wikiContent *WikiContent) error {
+	tmpl, err := template.New(path.Base(src)).ParseFS(wikiTemplates, src)
+	if err != nil {
+		return err
+	}
+	var f *os.File
+	f, err = os.Create(filepath.Join(localPath, tgt))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	err = tmpl.Execute(f, wikiContent)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func processTemplateFileWorkload(src string, tgt string, localPath string, workload *core.Workload) error {
+	tmpl, err := template.New(path.Base(src)).ParseFS(wikiTemplates, src)
+	if err != nil {
+		return err
+	}
+	var f *os.File
+	f, err = os.Create(filepath.Join(localPath, tgt))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	err = tmpl.Execute(f, workload)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
 func writeWiki(wikiContent *WikiContent, localPath string) error {
-	fs.WalkDir(wikiTemplates, "tpl", func(p string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			output.Println(p)
-			target := strings.Replace(p, "tpl"+string(os.PathSeparator), "", 1)
-			target = strings.Replace(target, ".tpl", ".md", 1)
-			tmpl, err := template.New(path.Base(p)).ParseFS(wikiTemplates, p)
-			if err != nil {
-				return err
+	fs.WalkDir(wikiTemplates, "tpl", func(src string, d fs.DirEntry, err error) error {
+		if src == "tpl/workloads/workload.tpl" {
+			for _, w := range wikiContent.Workloads {
+				tgt := "workloads/" + w.Name + ".md"
+				terr := processTemplateFileWorkload(src, tgt, localPath, &w)
+				if terr != nil {
+					return nil
+				}
 			}
-			var f *os.File
-			f, err = os.Create(filepath.Join(localPath, target))
-			if err != nil {
-				panic(err)
+		}
+		if !d.IsDir() && src != "tpl/workloads/workload.tpl" {
+			tgt := strings.Replace(src, "tpl"+string(os.PathSeparator), "", 1)
+			tgt = strings.Replace(tgt, ".tpl", ".md", 1)
+			if strings.HasSuffix(tgt, "order.md") {
+				tgt = strings.ReplaceAll(tgt, "order.md", ".order")
 			}
-			defer f.Close()
-			err = tmpl.Execute(f, wikiContent)
-			if err != nil {
-				panic(err)
+			terr := processTemplateFile(src, tgt, localPath, wikiContent)
+			if terr != nil {
+				return terr
 			}
 		}
 		return nil
@@ -121,7 +160,6 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 	if err != nil {
 		return err
 	}
-	output.Println(sets)
 
 	workloads, err := ado.GetWorkloadInfo()
 	if err != nil {
@@ -142,7 +180,6 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 	if err != nil {
 		return err
 	}
-	output.Println(ado.WikiRepo.LocalPath)
 
 	err = publish(ado)
 	if err != nil {
