@@ -11,7 +11,8 @@ import (
 	"github.com/frontierdigital/ranger/pkg/core"
 	rfile "github.com/frontierdigital/ranger/pkg/util/file"
 	rtime "github.com/frontierdigital/ranger/pkg/util/time"
-	egit "github.com/frontierdigital/utils/git/external_git"
+	igit "github.com/frontierdigital/utils/git"
+	git "github.com/frontierdigital/utils/git/external_git"
 	"github.com/frontierdigital/utils/output"
 )
 
@@ -24,8 +25,7 @@ type Workload struct {
 	Build   string
 }
 
-func publish(ado *core.AzureDevOps) error {
-	repo := egit.NewGit(ado.WikiRepo.LocalPath)
+func publish(ado *core.AzureDevOps, repoName string, repo interface{ igit.Git }) error {
 	hasChanges, err := repo.HasChanges()
 	if err != nil {
 		return err
@@ -38,14 +38,14 @@ func publish(ado *core.AzureDevOps) error {
 		}
 
 		us := rtime.GetUnixTimestamp()
-		branchName := "generate-docs-" + us
+		branchName := fmt.Sprintf("ranger/update/%s", us)
 
 		err = repo.Checkout(branchName, true)
 		if err != nil {
 			return err
 		}
 
-		commitMessage := "Initial Commit"
+		commitMessage := "Update docs."
 		_, err = repo.Commit(commitMessage)
 		if err != nil {
 			return err
@@ -56,9 +56,7 @@ func publish(ado *core.AzureDevOps) error {
 			return err
 		}
 
-		output.PrintlnfInfo("Pushed.")
-
-		prId, err := ado.CreatePullRequest(branchName, "Update docs "+us)
+		prId, err := ado.CreatePullRequest(repoName, branchName, "main", "Update docs")
 		if err != nil {
 			return err
 		}
@@ -68,7 +66,7 @@ func publish(ado *core.AzureDevOps) error {
 			return err
 		}
 
-		err = ado.SetPullRequestAutoComplete(prId, identityId)
+		err = ado.SetPullRequestAutoComplete(repoName, prId, identityId)
 		if err != nil {
 			return err
 		}
@@ -82,7 +80,7 @@ func createWorkLoadPages(workloads *[]core.Workload, localPath string) error {
 
 	err := rfile.Clear(orderPath)
 	if err != nil {
-		return errors.New("Could not reset order file")
+		return errors.New("could not reset order file")
 	}
 
 	for _, w := range *workloads {
@@ -90,86 +88,87 @@ func createWorkLoadPages(workloads *[]core.Workload, localPath string) error {
 
 		err := rfile.CreateOrUpdate(fullPath, w.Readme, false)
 		if err != nil {
-			return errors.New("Could not create or update page")
+			return errors.New("could not create or update page")
 		}
 
 		err = rfile.CreateOrUpdate(orderPath, fmt.Sprintln(w.Name), true)
 		if err != nil {
-			return errors.New("Could not create or update orderfile")
+			return errors.New("could not create or update orderfile")
 		}
 	}
 
 	return nil
 }
 
-type WorkloadIndex struct {
-	Workloads []core.Workload
-}
-
 func createWorkloadIndex(workloads *[]core.Workload, localPath string) error {
-	wl := WorkloadIndex{
+	wl := core.WorkloadIndex{
 		Workloads: *workloads,
 	}
 	tmpl, err := template.New("workloadTemplate").Parse(workloadTemplate)
 	if err != nil {
 		return err
 	}
-	var f *os.File
-	f, err = os.Create(filepath.Join(localPath, "workloads.md"))
+
+	file, err := os.Create(filepath.Join(localPath, "workloads.md"))
 	if err != nil {
-		panic(err)
+		return err
 	}
-	err = tmpl.Execute(f, wl)
+	defer file.Close()
+
+	err = tmpl.Execute(file, wl)
 	if err != nil {
-		panic(err)
-	}
-	err = f.Close()
-	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil
 }
 
-func (*Workload) GetTemplate() string {
-	return workloadTemplate
-}
-
-func GenerateDocs(config *core.Config, projectName string, organisationName string, repoName string, feedName string) error {
+func GenerateDocs(config *core.Config, projectName string, organisationName string, wikiName string, feedName string) error {
 	ado := &core.AzureDevOps{
 		OrganisationName: organisationName,
 		ProjectName:      projectName,
 		PAT:              config.ADO.PAT,
 		WorkloadFeedName: feedName,
-		WikiRepoName:     repoName,
 	}
+
+	err := ado.CreateWikiIfNotExists(wikiName, config.Git.UserName, config.Git.UserEmail)
+	if err != nil {
+		return err
+	}
+
+	output.PrintlnfInfo("Created wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)
+
+	wikiRepo, err := git.NewClonedGit(ado.WikiRepoRemoteUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(wikiRepo.GetRepositoryPath())
 
 	workloads, err := ado.GetWorkloadInfo()
 	if err != nil {
 		return err
 	}
 
-	err = ado.CreateWikiIfNotExists(config.Git.UserName, config.Git.UserEmail)
+	output.PrintlnfInfo("Fetched workload info from feed '%s' (https://dev.azure.com/%s/%s/_artifacts/feed/%s)", feedName, organisationName, projectName, feedName)
+
+	err = createWorkLoadPages(workloads, wikiRepo.GetRepositoryPath())
 	if err != nil {
 		return err
 	}
 
-	err = createWorkLoadPages(workloads, ado.WikiRepo.LocalPath)
+	err = createWorkloadIndex(workloads, wikiRepo.GetRepositoryPath())
 	if err != nil {
 		return err
 	}
 
-	err = createWorkloadIndex(workloads, ado.WikiRepo.LocalPath)
+	output.PrintlnInfo("Generated workload index and pages")
+
+	err = publish(ado, wikiName, wikiRepo)
 	if err != nil {
-		return err
+		return errors.New("could not create or automerge PR")
 	}
 
-	output.Println(ado.WikiRepo.LocalPath)
-
-	err = publish(ado)
-	if err != nil {
-		return errors.New("Could not create or automerge PR")
-	}
+	output.PrintlnfInfo("Published Wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)
 
 	return nil
 }

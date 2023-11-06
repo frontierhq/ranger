@@ -27,23 +27,11 @@ func PromoteSet(config *core.Config, projectName string, organisationName string
 	nextEnvironmentSetRepoName := fmt.Sprintf("%s-%s-set", nextEnvironment, sourceManifest.Set)
 	nextEnvironmentSetRepoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, nextEnvironmentSetRepoName)
 
-	nextEnvironmentSetRepoPath, err := os.MkdirTemp("", "")
+	nextEnvironmentSetRepo, err := git.NewClonedGit(nextEnvironmentSetRepoUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)
 	if err != nil {
 		return err
 	}
-	nextEnvironmentSetRepo := git.NewGit(nextEnvironmentSetRepoPath)
-	err = nextEnvironmentSetRepo.CloneOverHttp(nextEnvironmentSetRepoUrl, config.ADO.PAT, "x-oauth-basic")
-	if err != nil {
-		return err
-	}
-	err = nextEnvironmentSetRepo.SetConfig("user.email", config.Git.UserEmail)
-	if err != nil {
-		return err
-	}
-	err = nextEnvironmentSetRepo.SetConfig("user.name", config.Git.UserName)
-	if err != nil {
-		return err
-	}
+	defer os.RemoveAll(nextEnvironmentSetRepo.GetRepositoryPath())
 
 	output.PrintfInfo("Cloned target environment set repository '%s' (https://dev.azure.com/%s/%s/_git/%s)", nextEnvironmentSetRepoName, organisationName, projectName, nextEnvironmentSetRepoName)
 
