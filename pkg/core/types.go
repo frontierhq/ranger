@@ -12,9 +12,9 @@ type AzureDevOps struct {
 	OrganisationName  string
 	ProjectName       string
 	PAT               string
-	WorkloadFeedName  string
 	WikiRemoteUrl     string
 	WikiRepoRemoteUrl string
+	WorkloadFeedName  string
 }
 
 type Config struct {
