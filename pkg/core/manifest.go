@@ -42,6 +42,7 @@ func (m *Manifest) Save() error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	_, err = fmt.Fprint(file, builder.String())
 	if err != nil {

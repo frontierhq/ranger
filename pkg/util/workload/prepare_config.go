@@ -33,25 +33,11 @@ func PrepareConfig(config *core.Config, projectName string, organisationName str
 	if workloadConfigExists || workloadSecretsExists {
 		configRepoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, configRepoName)
 
-		configRepoPath, err := os.MkdirTemp("", "")
+		configRepo, err := git.NewClonedGit(configRepoUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)
 		if err != nil {
 			return nil, err
 		}
-		configRepo := git.NewGit(configRepoPath)
 		defer os.RemoveAll(configRepo.GetRepositoryPath())
-
-		err = configRepo.CloneOverHttp(configRepoUrl, config.ADO.PAT, "x-oauth-basic")
-		if err != nil {
-			return nil, err
-		}
-		err = configRepo.SetConfig("user.email", config.Git.UserEmail)
-		if err != nil {
-			return nil, err
-		}
-		err = configRepo.SetConfig("user.name", config.Git.UserName)
-		if err != nil {
-			return nil, err
-		}
 
 		configBranchName := fmt.Sprintf("%s_%s_%s_%s", workload.Name, environment, set, ksuid.New().String())
 		err = configRepo.Checkout(configBranchName, true)
