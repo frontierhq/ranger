@@ -9,12 +9,12 @@ type ADOConfig struct {
 }
 
 type AzureDevOps struct {
-	OrganisationName string
-	ProjectName      string
-	PAT              string
-	WorkloadFeedName string
-	WikiRepoName     string
-	WikiRepo         *GitRepository
+	OrganisationName  string
+	ProjectName       string
+	PAT               string
+	WikiRemoteUrl     string
+	WikiRepoRemoteUrl string
+	WorkloadFeedName  string
 }
 
 type Config struct {
@@ -30,12 +30,6 @@ type ExtraParameter struct {
 type GitConfig struct {
 	UserEmail string `mapstructure:"UserEmail"`
 	UserName  string `mapstructure:"UserName"`
-}
-
-type GitRepository struct {
-	LocalPath string
-	UserName  string
-	UserEmail string
 }
 
 type Manifest struct {
@@ -60,6 +54,10 @@ type Workload struct {
 	Build     string
 	Readme    string
 	Instances []*WorkloadInstance
+}
+
+type WorkloadIndex struct {
+	Workloads []Workload
 }
 
 type WorkloadInstance struct {

@@ -3,6 +3,7 @@ package generate
 import (
 	"embed"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
@@ -12,7 +13,8 @@ import (
 
 	"github.com/frontierdigital/ranger/pkg/core"
 	rtime "github.com/frontierdigital/ranger/pkg/util/time"
-	egit "github.com/frontierdigital/utils/git/external_git"
+	igit "github.com/frontierdigital/utils/git"
+	git "github.com/frontierdigital/utils/git/external_git"
 	"github.com/frontierdigital/utils/output"
 )
 
@@ -25,8 +27,7 @@ type Workload struct {
 	Build   string
 }
 
-func publish(ado *core.AzureDevOps) error {
-	repo := egit.NewGit(ado.WikiRepo.LocalPath)
+func publish(ado *core.AzureDevOps, repoName string, repo interface{ igit.Git }) error {
 	hasChanges, err := repo.HasChanges()
 	if err != nil {
 		return err
@@ -39,14 +40,14 @@ func publish(ado *core.AzureDevOps) error {
 		}
 
 		us := rtime.GetUnixTimestamp()
-		branchName := "generate-docs-" + us
+		branchName := fmt.Sprintf("ranger/update/%s", us)
 
 		err = repo.Checkout(branchName, true)
 		if err != nil {
 			return err
 		}
 
-		commitMessage := "Initial Commit"
+		commitMessage := "Update docs."
 		_, err = repo.Commit(commitMessage)
 		if err != nil {
 			return err
@@ -57,9 +58,7 @@ func publish(ado *core.AzureDevOps) error {
 			return err
 		}
 
-		output.PrintlnfInfo("Pushed.")
-
-		prId, err := ado.CreatePullRequest(branchName, "Update docs "+us)
+		prId, err := ado.CreatePullRequest(repoName, branchName, "main", "Update docs")
 		if err != nil {
 			return err
 		}
@@ -69,7 +68,7 @@ func publish(ado *core.AzureDevOps) error {
 			return err
 		}
 
-		err = ado.SetPullRequestAutoComplete(prId, identityId)
+		err = ado.SetPullRequestAutoComplete(repoName, prId, identityId)
 		if err != nil {
 			return err
 		}
@@ -133,17 +132,30 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 		ProjectName:      projectName,
 		PAT:              config.ADO.PAT,
 		WorkloadFeedName: feedName,
-		WikiRepoName:     repoName,
 	}
 	sets, err := ado.GetSets()
 	if err != nil {
 		return err
 	}
 
+	err := ado.CreateWikiIfNotExists(wikiName, config.Git.UserName, config.Git.UserEmail)
+	if err != nil {
+		return err
+	}
+
+	output.PrintlnfInfo("Created wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)
+
+	wikiRepo, err := git.NewClonedGit(ado.WikiRepoRemoteUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(wikiRepo.GetRepositoryPath())
+
 	workloads, err := ado.GetWorkloadInfo()
 	if err != nil {
 		return err
 	}
+	output.PrintlnfInfo("Fetched workload info from feed '%s' (https://dev.azure.com/%s/%s/_artifacts/feed/%s)", feedName, organisationName, projectName, feedName)
 
 	wc := WikiContent{
 		Workloads: *workloads,
@@ -151,9 +163,6 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 	}
 
 	err = ado.CreateWikiIfNotExists(config.Git.UserName, config.Git.UserEmail)
-	if err != nil {
-		return err
-	}
 
 	err = writeWiki(&wc, ado.WikiRepo.LocalPath)
 	if err != nil {
@@ -164,6 +173,8 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 	if err != nil {
 		return errors.New("could not create or automerge pr")
 	}
+
+	output.PrintlnfInfo("Published Wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)
 
 	return nil
 }

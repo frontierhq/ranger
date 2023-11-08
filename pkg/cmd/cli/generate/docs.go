@@ -30,8 +30,8 @@ func NewCmdGenerateDocs(config *core.Config) *cobra.Command {
 
 	cmd.Flags().StringVarP(&projectName, "project-name", "p", "", "Project name")
 	cmd.Flags().StringVarP(&orgName, "organisation-name", "o", "", "Organisation name")
-	cmd.Flags().StringVarP(&wikiName, "wiki-name", "w", "", "Repository name the stores the wiki docs")
-	cmd.Flags().StringVarP(&feedName, "feed-name", "f", "", "ADO artifact feed name")
+	cmd.Flags().StringVarP(&wikiName, "wiki-name", "w", "", "Wiki name")
+	cmd.Flags().StringVarP(&feedName, "feed-name", "f", "", "Artifact feed name")
 
 	return cmd
 }

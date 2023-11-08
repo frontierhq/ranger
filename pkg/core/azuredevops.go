@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func (ado *AzureDevOps) CreatePullRequest(branchName string, message string) (*int, error) {
+func (ado *AzureDevOps) CreatePullRequest(repositoryName string, sourceBranchName string, targetBranchName string, title string) (*int, error) {
 	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
 
-	pr, err := azureDevOps.CreatePullRequest(ado.ProjectName, ado.WikiRepoName, fmt.Sprintf("refs/heads/%s", branchName), "refs/heads/main", message)
+	pr, err := azureDevOps.CreatePullRequest(ado.ProjectName, repositoryName, fmt.Sprintf("refs/heads/%s", sourceBranchName), fmt.Sprintf("refs/heads/%s", targetBranchName), title)
 	if err != nil {
 		return nil, err
 	}
@@ -20,31 +20,32 @@ func (ado *AzureDevOps) CreatePullRequest(branchName string, message string) (*i
 	return pr.PullRequestId, nil
 }
 
-func (ado *AzureDevOps) SetPullRequestAutoComplete(pullRequestId *int, identityId *uuid.UUID) error {
+func (ado *AzureDevOps) SetPullRequestAutoComplete(repositoryName string, pullRequestId *int, identityId *uuid.UUID) error {
 	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
-	return azureDevOps.SetPullRequestAutoComplete(ado.ProjectName, ado.WikiRepoName, *pullRequestId, identityId)
+	return azureDevOps.SetPullRequestAutoComplete(ado.ProjectName, repositoryName, *pullRequestId, identityId)
 }
 
-func (ado *AzureDevOps) CreateWikiIfNotExists(gitUserName string, gitUserEmail string) error {
+func (ado *AzureDevOps) CreateWikiIfNotExists(wikiName string, gitUserName string, gitUserEmail string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
-	localPath, err := azureDevOps.CreateWikiIfNotExists(ado.ProjectName, ado.WikiRepoName, gitUserEmail, gitUserName, ado.PAT)
+
+	wiki, repo, err := azureDevOps.CreateWikiIfNotExists(ado.ProjectName, wikiName, gitUserEmail, gitUserName)
 	if err != nil {
 		return err
 	}
-	ado.WikiRepo = &GitRepository{
-		LocalPath: *localPath,
-		UserName:  gitUserName,
-		UserEmail: gitUserEmail,
-	}
+	ado.WikiRemoteUrl = *wiki.RemoteUrl
+	ado.WikiRepoRemoteUrl = *repo.RemoteUrl
+
 	return nil
 }
 
 func (ado *AzureDevOps) GetIdentityId() (*uuid.UUID, error) {
 	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
+
 	identityId, err := azureDevOps.GetIdentityId()
 	if err != nil {
 		return nil, err
 	}
+
 	return identityId, nil
 }
 
@@ -60,7 +61,7 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 
 	for _, p := range *packages {
 		if len(*p.Versions) > 0 {
-			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version)
+			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version, "README.md")
 			workloads = append(workloads, Workload{
 				Name:    strings.ReplaceAll(*p.Name, "-workload", ""),
 				Version: *(*p.Versions)[0].Version,
