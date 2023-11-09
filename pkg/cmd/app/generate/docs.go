@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -72,13 +73,15 @@ func publish(ado *core.AzureDevOps, repoName string, repo interface{ igit.Git })
 		if err != nil {
 			return err
 		}
+	} else {
+		output.PrintlnfInfo("No changes for wiki")
 	}
 
 	return nil
 }
 
 type WikiContent struct {
-	Sets      []core.Set
+	Sets      []core.SetCollection
 	Workloads []core.Workload
 }
 
@@ -88,6 +91,10 @@ func processTemplateFile(src string, tgt string, localPath string, wikiContent i
 		return err
 	}
 	var f *os.File
+	err = os.MkdirAll(filepath.Dir(filepath.Join(localPath, tgt)), 0700)
+	if err != nil {
+		panic(err)
+	}
 	f, err = os.Create(filepath.Join(localPath, tgt))
 	if err != nil {
 		panic(err)
@@ -102,18 +109,30 @@ func processTemplateFile(src string, tgt string, localPath string, wikiContent i
 }
 
 func writeWiki(wikiContent *WikiContent, localPath string) error {
+	loopDirs := []string{"tpl/sets", "tpl/workloads"}
 	fs.WalkDir(wikiTemplates, "tpl", func(src string, d fs.DirEntry, err error) error {
-		if src == "tpl/workloads/workload.md.tpl" {
-			for _, w := range wikiContent.Workloads {
-				tgt := "workloads/" + w.Name + ".md"
-				terr := processTemplateFile(src, tgt, localPath, &w)
-				if terr != nil {
-					return nil
+		if slices.Contains(loopDirs, filepath.Dir(src)) {
+			if strings.Contains(src, "workloads") {
+				for _, w := range wikiContent.Workloads {
+					tgt := "workloads/" + w.Name + ".md"
+					terr := processTemplateFile(src, tgt, localPath, &w)
+					if terr != nil {
+						return nil
+					}
+				}
+			}
+			if strings.Contains(src, "sets") {
+				for _, s := range wikiContent.Sets {
+					tgt := "sets/" + s.Name + ".md"
+					terr := processTemplateFile(src, tgt, localPath, &s)
+					if terr != nil {
+						return nil
+					}
 				}
 			}
 		}
 
-		if !d.IsDir() && src != "tpl/workloads/workload.md.tpl" {
+		if !d.IsDir() && !slices.Contains(loopDirs, filepath.Dir(src)) {
 			tgt := strings.Replace(src, "tpl"+string(os.PathSeparator), "", 1)
 			tgt = strings.ReplaceAll(tgt, ".tpl", "")
 			terr := processTemplateFile(src, tgt, localPath, wikiContent)
@@ -126,7 +145,7 @@ func writeWiki(wikiContent *WikiContent, localPath string) error {
 	return nil
 }
 
-func GenerateDocs(config *core.Config, projectName string, organisationName string, repoName string, feedName string) error {
+func GenerateDocs(config *core.Config, projectName string, organisationName string, wikiName string, feedName string) error {
 	ado := &core.AzureDevOps{
 		OrganisationName: organisationName,
 		ProjectName:      projectName,
@@ -137,19 +156,7 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 	if err != nil {
 		return err
 	}
-
-	err := ado.CreateWikiIfNotExists(wikiName, config.Git.UserName, config.Git.UserEmail)
-	if err != nil {
-		return err
-	}
-
-	output.PrintlnfInfo("Created wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)
-
-	wikiRepo, err := git.NewClonedGit(ado.WikiRepoRemoteUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(wikiRepo.GetRepositoryPath())
+	output.PrintlnfInfo("Fetched set info from project '%s/%s'", organisationName, projectName)
 
 	workloads, err := ado.GetWorkloadInfo()
 	if err != nil {
@@ -162,14 +169,25 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 		Sets:      *sets,
 	}
 
-	err = ado.CreateWikiIfNotExists(config.Git.UserName, config.Git.UserEmail)
-
-	err = writeWiki(&wc, ado.WikiRepo.LocalPath)
+	err = ado.CreateWikiIfNotExists(wikiName, config.Git.UserName, config.Git.UserEmail)
 	if err != nil {
 		return err
 	}
 
-	err = publish(ado)
+	output.PrintlnfInfo("Created wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)
+
+	wikiRepo, err := git.NewClonedGit(ado.WikiRepoRemoteUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(wikiRepo.GetRepositoryPath())
+
+	err = writeWiki(&wc, wikiRepo.GetRepositoryPath())
+	if err != nil {
+		return err
+	}
+
+	err = publish(ado, wikiName, wikiRepo)
 	if err != nil {
 		return errors.New("could not create or automerge pr")
 	}

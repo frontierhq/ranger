@@ -48,6 +48,12 @@ type Set struct {
 	Manifest    *Manifest
 }
 
+type SetCollection struct {
+	Name  string
+	Entry *Set
+	Sets  []*Set
+}
+
 type Workload struct {
 	Name      string
 	Version   string

@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/frontierdigital/utils/azuredevops"
@@ -61,7 +60,7 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 
 	for _, p := range *packages {
 		if len(*p.Versions) > 0 {
-			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version, "README.md")
+			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version, "README.md", "tag")
 			workloads = append(workloads, Workload{
 				Name:    strings.ReplaceAll(*p.Name, "-workload", ""),
 				Version: *(*p.Versions)[0].Version,
@@ -75,30 +74,48 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 	return &workloads, nil
 }
 
-func (ado *AzureDevOps) GetSets() (*[]Set, error) {
+func getManifestContent(azureDevOps *azuredevops.AzureDevOps, projectName *string, repoName *string) (*Manifest, error) {
+	m := "main"
+	c, err := azureDevOps.GetFileContent(*projectName, *repoName, m, "manifest.yml", "branch")
+	if err != nil {
+		return nil, err
+	}
+
+	man, err := LoadManifestFromString(*c.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	return &man, nil
+}
+
+func (ado *AzureDevOps) GetSets() (*[]SetCollection, error) {
 	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
-	var sets []Set
+	var sets []SetCollection
+
 	repos, err := azureDevOps.GetRepositories(ado.ProjectName)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, r := range *repos {
 		if strings.HasSuffix(*r.Name, "-set") {
-			n := strings.ReplaceAll(*r.Name, "-set", "")
-			re := regexp.MustCompile(`^.+?-`)
-			n = re.ReplaceAllString(n, "")
+			n := getSetNameFromRepoName(r.Name)
 
-			exists := false
-			for _, v := range sets {
-				if v.Name == n {
-					exists = true
-				}
+			m, err := getManifestContent(azureDevOps, &ado.ProjectName, r.Name)
+			if err != nil {
+				return nil, err
 			}
-			if !exists {
-				sets = append(sets, Set{
-					Name: n,
-				})
+
+			sc := getSetCollectionByName(&sets, *n)
+			if sc == nil {
+				sets = newSetCollection(&sets, *n)
+				sc = getSetCollectionByName(&sets, *n)
 			}
+			sc.addSet(&Set{
+				Name:     *n,
+				Manifest: m,
+			})
 		}
 	}
 	return &sets, nil
