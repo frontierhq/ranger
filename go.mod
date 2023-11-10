@@ -2,8 +2,6 @@ module github.com/frontierdigital/ranger
 
 go 1.21
 
-replace github.com/frontierdigital/utils => ../utils
-
 require (
 	github.com/frontierdigital/utils v0.0.8
 	github.com/google/uuid v1.1.2
