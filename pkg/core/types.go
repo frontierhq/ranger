@@ -75,9 +75,27 @@ type WorkloadInstance struct {
 }
 
 type WorkloadResult struct {
-	Error      error
 	FinishTime *time.Time
 	Link       string
 	QueueTime  *time.Time
+	Status     WorkloadResultStatus
 	Workload   *WorkloadInstance
+}
+
+type WorkloadResultStatus string
+
+type workloadResultStatusValuesType struct {
+	Succeeded WorkloadResultStatus
+	Failed    WorkloadResultStatus
+	Skipped   WorkloadResultStatus
+}
+
+var WorkloadResultStatusValuesType = workloadResultStatusValuesType{
+	Succeeded: "Succeeded",
+	Failed:    "Failed",
+	Skipped:   "Skipped",
+}
+
+type WorkloadDestroyPreventedError struct {
+	Workload *WorkloadInstance
 }
