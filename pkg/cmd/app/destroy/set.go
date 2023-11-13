@@ -29,7 +29,7 @@ func DestroySet(config *core.Config, projectName string, organisationName string
 
 	manifest.PrintWorkloadsSummary()
 
-	output.PrintfInfo("Action: Destroy (in reverse order)\n\n")
+	output.PrintfInfo("Action: Destroy from %s (in reverse order)\n\n", manifest.Environment)
 
 	var hasErrors bool
 	for i := len(manifest.Workloads) - 1; i >= 0; i-- {
