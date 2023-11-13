@@ -12,8 +12,8 @@ import (
 func (m *Manifest) PrintHeader() {
 	builder := &strings.Builder{}
 	builder.WriteString(fmt.Sprintf("%s\n", strings.Repeat("~", 78)))
-	builder.WriteString(fmt.Sprintf("Environment  | %s\n", m.Environment))
 	builder.WriteString(fmt.Sprintf("Set          | %s\n", m.Set))
+	builder.WriteString(fmt.Sprintf("Environment  | %s\n", m.Environment))
 	builder.WriteString(fmt.Sprintf("Version      | %d\n", m.Version))
 	builder.WriteString(fmt.Sprintf("%s\n", strings.Repeat("~", 78)))
 	output.Println(builder.String())

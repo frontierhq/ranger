@@ -24,6 +24,11 @@ func PromoteSet(config *core.Config, projectName string, organisationName string
 
 	sourceManifest.PrintWorkloadsSummary()
 
+	if sourceManifest.NextEnvironment == "" {
+		output.PrintfInfo("Action: None (no next environment specified)\n\n")
+		return nil
+	}
+
 	output.PrintfInfo("Action: Promote to %s\n\n", sourceManifest.NextEnvironment)
 
 	nextEnvironmentSetRepoName := fmt.Sprintf("%s-%s-set", sourceManifest.NextEnvironment, sourceManifest.Set)
