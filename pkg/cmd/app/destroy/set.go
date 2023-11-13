@@ -69,13 +69,10 @@ func DestroyWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, p
 	}
 
 	if workloadInstance.PreventDestroy {
-		// output.PrintlnfInfo("Instance configuration prevents destroy; skipping")
 		now := time.Now()
 		result.Link = "N/A"
 		result.QueueTime = &now
 		result.FinishTime = &now
-		// result.Status = core.WorkloadResultStatusValuesType.Skipped
-		// return // throw custom error here and then set skipped status in the defer
 		panic(&core.WorkloadDestroyPreventedError{
 			Workload: workloadInstance,
 		})
