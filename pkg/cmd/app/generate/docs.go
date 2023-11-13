@@ -1,23 +1,26 @@
 package generate
 
 import (
-	_ "embed"
+	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"slices"
+	"strings"
 	"text/template"
 
 	"github.com/frontierdigital/ranger/pkg/core"
-	rfile "github.com/frontierdigital/ranger/pkg/util/file"
 	rtime "github.com/frontierdigital/ranger/pkg/util/time"
 	igit "github.com/frontierdigital/utils/git"
 	git "github.com/frontierdigital/utils/git/external_git"
 	"github.com/frontierdigital/utils/output"
 )
 
-//go:embed tpl/workload.tpl
-var workloadTemplate string
+//go:embed tpl/*
+var wikiTemplates embed.FS
 
 type Workload struct {
 	Name    string
@@ -70,56 +73,75 @@ func publish(ado *core.AzureDevOps, repoName string, repo interface{ igit.Git })
 		if err != nil {
 			return err
 		}
+	} else {
+		output.PrintlnfInfo("No changes for wiki")
 	}
 
 	return nil
 }
 
-func createWorkLoadPages(workloads *[]core.Workload, localPath string) error {
-	orderPath := filepath.Join(localPath, "workloads", ".order")
+type WikiContent struct {
+	Sets      []core.SetCollection
+	Workloads []core.Workload
+}
 
-	err := rfile.Clear(orderPath)
+func processTemplateFile(src string, tgt string, localPath string, wikiContent interface{}) error {
+	tmpl, err := template.New(path.Base(src)).ParseFS(wikiTemplates, src)
 	if err != nil {
-		return errors.New("could not reset order file")
+		return err
 	}
-
-	for _, w := range *workloads {
-		fullPath := filepath.Join(localPath, "workloads", fmt.Sprintf("%s.md", w.Name))
-
-		err := rfile.CreateOrUpdate(fullPath, w.Readme, false)
-		if err != nil {
-			return errors.New("could not create or update page")
-		}
-
-		err = rfile.CreateOrUpdate(orderPath, fmt.Sprintln(w.Name), true)
-		if err != nil {
-			return errors.New("could not create or update orderfile")
-		}
+	var f *os.File
+	err = os.MkdirAll(filepath.Dir(filepath.Join(localPath, tgt)), 0700)
+	if err != nil {
+		panic(err)
 	}
+	f, err = os.Create(filepath.Join(localPath, tgt))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
 
+	err = tmpl.Execute(f, wikiContent)
+	if err != nil {
+		panic(err)
+	}
 	return nil
 }
 
-func createWorkloadIndex(workloads *[]core.Workload, localPath string) error {
-	wl := core.WorkloadIndex{
-		Workloads: *workloads,
-	}
-	tmpl, err := template.New("workloadTemplate").Parse(workloadTemplate)
-	if err != nil {
-		return err
-	}
+func writeWiki(wikiContent *WikiContent, localPath string) error {
+	loopDirs := []string{"tpl/sets", "tpl/workloads"}
+	fs.WalkDir(wikiTemplates, "tpl", func(src string, d fs.DirEntry, err error) error {
+		if slices.Contains(loopDirs, filepath.Dir(src)) {
+			if strings.Contains(src, "workloads") {
+				for _, w := range wikiContent.Workloads {
+					tgt := "workloads/" + w.Name + ".md"
+					terr := processTemplateFile(src, tgt, localPath, &w)
+					if terr != nil {
+						return nil
+					}
+				}
+			}
+			if strings.Contains(src, "sets") {
+				for _, s := range wikiContent.Sets {
+					tgt := "sets/" + s.Name + ".md"
+					terr := processTemplateFile(src, tgt, localPath, &s)
+					if terr != nil {
+						return nil
+					}
+				}
+			}
+		}
 
-	file, err := os.Create(filepath.Join(localPath, "workloads.md"))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	err = tmpl.Execute(file, wl)
-	if err != nil {
-		return err
-	}
-
+		if !d.IsDir() && !slices.Contains(loopDirs, filepath.Dir(src)) {
+			tgt := strings.Replace(src, "tpl"+string(os.PathSeparator), "", 1)
+			tgt = strings.ReplaceAll(tgt, ".tpl", "")
+			terr := processTemplateFile(src, tgt, localPath, wikiContent)
+			if terr != nil {
+				return terr
+			}
+		}
+		return nil
+	})
 	return nil
 }
 
@@ -130,8 +152,24 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 		PAT:              config.ADO.PAT,
 		WorkloadFeedName: feedName,
 	}
+	sets, err := ado.GetSets()
+	if err != nil {
+		return err
+	}
+	output.PrintlnfInfo("Fetched set info from project '%s/%s'", organisationName, projectName)
 
-	err := ado.CreateWikiIfNotExists(wikiName, config.Git.UserName, config.Git.UserEmail)
+	workloads, err := ado.GetWorkloadInfo()
+	if err != nil {
+		return err
+	}
+	output.PrintlnfInfo("Fetched workload info from feed '%s' (https://dev.azure.com/%s/%s/_artifacts/feed/%s)", feedName, organisationName, projectName, feedName)
+
+	wc := WikiContent{
+		Workloads: *workloads,
+		Sets:      *sets,
+	}
+
+	err = ado.CreateWikiIfNotExists(wikiName, config.Git.UserName, config.Git.UserEmail)
 	if err != nil {
 		return err
 	}
@@ -144,28 +182,14 @@ func GenerateDocs(config *core.Config, projectName string, organisationName stri
 	}
 	defer os.RemoveAll(wikiRepo.GetRepositoryPath())
 
-	workloads, err := ado.GetWorkloadInfo()
+	err = writeWiki(&wc, wikiRepo.GetRepositoryPath())
 	if err != nil {
 		return err
 	}
-
-	output.PrintlnfInfo("Fetched workload info from feed '%s' (https://dev.azure.com/%s/%s/_artifacts/feed/%s)", feedName, organisationName, projectName, feedName)
-
-	err = createWorkLoadPages(workloads, wikiRepo.GetRepositoryPath())
-	if err != nil {
-		return err
-	}
-
-	err = createWorkloadIndex(workloads, wikiRepo.GetRepositoryPath())
-	if err != nil {
-		return err
-	}
-
-	output.PrintlnInfo("Generated workload index and pages")
 
 	err = publish(ado, wikiName, wikiRepo)
 	if err != nil {
-		return errors.New("could not create or automerge PR")
+		return errors.New("could not create or automerge pr")
 	}
 
 	output.PrintlnfInfo("Published Wiki '%s' (%s)", wikiName, ado.WikiRemoteUrl)

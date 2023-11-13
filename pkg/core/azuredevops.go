@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/frontierdigital/utils/azuredevops"
 	"github.com/google/uuid"
@@ -59,9 +60,9 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 
 	for _, p := range *packages {
 		if len(*p.Versions) > 0 {
-			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version, "README.md")
+			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version, "README.md", "tag")
 			workloads = append(workloads, Workload{
-				Name:    *p.Name,
+				Name:    strings.ReplaceAll(*p.Name, "-workload", ""),
 				Version: *(*p.Versions)[0].Version,
 				Build:   "N/A",
 				Readme:  *c.Content,
@@ -71,4 +72,51 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 	}
 
 	return &workloads, nil
+}
+
+func getManifestContent(azureDevOps *azuredevops.AzureDevOps, projectName *string, repoName *string) (*Manifest, error) {
+	m := "main"
+	c, err := azureDevOps.GetFileContent(*projectName, *repoName, m, "manifest.yml", "branch")
+	if err != nil {
+		return nil, err
+	}
+
+	man, err := LoadManifestFromString(*c.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	return &man, nil
+}
+
+func (ado *AzureDevOps) GetSets() (*[]SetCollection, error) {
+	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
+	var sets []SetCollection
+
+	repos, err := azureDevOps.GetRepositories(ado.ProjectName)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range *repos {
+		if strings.HasSuffix(*r.Name, "-set") {
+			n := getSetNameFromRepoName(r.Name)
+
+			m, err := getManifestContent(azureDevOps, &ado.ProjectName, r.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			sc := getSetCollectionByName(&sets, *n)
+			if sc == nil {
+				sets = newSetCollection(&sets, *n)
+				sc = getSetCollectionByName(&sets, *n)
+			}
+			sc.addSet(&Set{
+				Name:     *n,
+				Manifest: m,
+			})
+		}
+	}
+	return &sets, nil
 }

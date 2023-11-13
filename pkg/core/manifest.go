@@ -69,3 +69,14 @@ func LoadManifest(filePath string) (Manifest, error) {
 
 	return manifest, nil
 }
+
+func LoadManifestFromString(manifestContent string) (Manifest, error) {
+	manifest := Manifest{}
+
+	err := yaml.Unmarshal([]byte(manifestContent), &manifest)
+	if err != nil {
+		return manifest, err
+	}
+
+	return manifest, nil
+}
