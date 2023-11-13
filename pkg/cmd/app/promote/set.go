@@ -11,7 +11,7 @@ import (
 	"github.com/frontierdigital/utils/output"
 )
 
-func PromoteSet(config *core.Config, projectName string, organisationName string, nextEnvironment string) error {
+func PromoteSet(config *core.Config, projectName string, organisationName string) error {
 	azureDevOps := azuredevops.NewAzureDevOps(organisationName, config.ADO.PAT)
 
 	sourceManifestFilepath, _ := filepath.Abs("./manifest.yml")
@@ -24,7 +24,9 @@ func PromoteSet(config *core.Config, projectName string, organisationName string
 
 	sourceManifest.PrintWorkloadsSummary()
 
-	nextEnvironmentSetRepoName := fmt.Sprintf("%s-%s-set", nextEnvironment, sourceManifest.Set)
+	output.PrintfInfo("Action: Promote to %s\n\n", sourceManifest.NextEnvironment)
+
+	nextEnvironmentSetRepoName := fmt.Sprintf("%s-%s-set", sourceManifest.NextEnvironment, sourceManifest.Set)
 	nextEnvironmentSetRepoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, nextEnvironmentSetRepoName)
 
 	nextEnvironmentSetRepo, err := git.NewClonedGit(nextEnvironmentSetRepoUrl, "x-oauth-basic", config.ADO.PAT, config.Git.UserEmail, config.Git.UserName)

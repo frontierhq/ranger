@@ -29,7 +29,7 @@ func DeploySet(config *core.Config, projectName string, organisationName string)
 
 	manifest.PrintWorkloadsSummary()
 
-	output.PrintfInfo("Action: Deploy\n\n")
+	output.PrintfInfo("Action: Deploy to %s\n\n", manifest.Environment)
 
 	var hasErrors bool
 	for _, workloadInstance := range manifest.Workloads {

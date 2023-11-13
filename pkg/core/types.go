@@ -33,11 +33,12 @@ type GitConfig struct {
 }
 
 type Manifest struct {
-	Version     int64               `yaml:"version"`
-	Environment string              `yaml:"environment"`
-	FilePath    string              `yaml:"-"`
-	Set         string              `yaml:"set"`
-	Workloads   []*WorkloadInstance `yaml:"workloads"`
+	Version         int64               `yaml:"version"`
+	Environment     string              `yaml:"environment"`
+	FilePath        string              `yaml:"-"`
+	NextEnvironment string              `yaml:"nextEnvironment"`
+	Set             string              `yaml:"set"`
+	Workloads       []*WorkloadInstance `yaml:"workloads"`
 }
 
 type Set struct {
