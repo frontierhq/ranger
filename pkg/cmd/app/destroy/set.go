@@ -38,8 +38,7 @@ func DestroySet(config *core.Config, projectName string, organisationName string
 		workloadInstance.PrintHeader()
 
 		result := DestroyWorkload(*azureDevOps, config, projectName, organisationName, manifest.Environment, manifest.Set, workloadInstance)
-		if result.Error != nil {
-			output.PrintfError(result.Error.Error())
+		if result.Status == core.WorkloadResultStatusValuesType.Failed {
 			hasErrors = true
 		}
 
@@ -54,43 +53,64 @@ func DestroySet(config *core.Config, projectName string, organisationName string
 }
 
 func DestroyWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, projectName string, organisationName string, environment string, set string, workloadInstance *core.WorkloadInstance) (result *core.WorkloadResult) {
+	defer func() {
+		if e, ok := recover().(error); ok {
+			if _, ok := e.(*core.WorkloadDestroyPreventedError); ok {
+				result.Status = core.WorkloadResultStatusValuesType.Skipped
+			} else {
+				result.Status = core.WorkloadResultStatusValuesType.Failed
+			}
+			output.PrintfError(e.Error())
+		}
+	}()
+
 	result = &core.WorkloadResult{
 		Workload: workloadInstance,
 	}
 
 	if workloadInstance.PreventDestroy {
-		output.PrintlnfInfo("Instance configuration prevents destroy; skipping")
 		now := time.Now()
 		result.Link = "N/A"
 		result.QueueTime = &now
 		result.FinishTime = &now
-		return
+		panic(&core.WorkloadDestroyPreventedError{
+			Workload: workloadInstance,
+		})
 	}
 
 	typeProjectName, typeRepositoryName := workloadInstance.GetTypeProjectAndRepositoryNames()
 
-	pipelineName := fmt.Sprintf("%s (destroy)", typeRepositoryName)
-	buildDefinition, err := azureDevOps.GetBuildDefinitionByName(typeProjectName, pipelineName)
-	if err != nil {
-		result.Error = err
-		return
-	}
-
-	output.PrintlnfInfo("Found destroy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
-		*buildDefinition.Id, workloadInstance.Type, organisationName, projectName, *buildDefinition.Id)
-
 	repository, err := azureDevOps.GetRepository(typeProjectName, typeRepositoryName)
 	if err != nil {
-		result.Error = err
-		return
+		panic(err)
 	}
 
 	output.PrintlnfInfo("Found repository with Id '%s' for workload type '%s' (%s)", repository.Id, workloadInstance.Type, *repository.WebUrl)
 
+	var buildDefinitionId *int
+	pipelineName := fmt.Sprintf("%s~%s (destroy)", typeProjectName, typeRepositoryName)
+	buildDefinitionRef, err := azureDevOps.GetBuildDefinitionByName(projectName, pipelineName)
+	if err != nil {
+		if _, ok := err.(*azuredevops.BuildNotFoundError); ok {
+			buildDefinition, err := azureDevOps.CreateBuildDefinition(projectName, repository.Id.String(), "Ranger/Workloads", pipelineName, "azure-pipelines.destroy.yml")
+			if err != nil {
+				panic(err)
+			}
+			buildDefinitionId = buildDefinition.Id
+			output.PrintlnfInfo("Created destroy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+				*buildDefinitionId, workloadInstance.Type, organisationName, projectName, *buildDefinitionId)
+		} else {
+			panic(err)
+		}
+	} else {
+		buildDefinitionId = buildDefinitionRef.Id
+		output.PrintlnfInfo("Found destroy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+			*buildDefinitionId, workloadInstance.Type, organisationName, projectName, *buildDefinitionId)
+	}
+
 	configRef, err := workload.PrepareConfig(config, projectName, organisationName, environment, set, workloadInstance)
 	if err != nil {
-		result.Error = err
-		return
+		panic(err)
 	}
 
 	tags := []string{environment, set}
@@ -109,10 +129,9 @@ func DestroyWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, p
 
 	sourceBranchName := fmt.Sprintf("refs/tags/%s", workloadInstance.Version)
 
-	build, err := azureDevOps.QueueBuild(typeProjectName, buildDefinition.Id, sourceBranchName, templateParameters, tags)
+	build, err := azureDevOps.QueueBuild(projectName, *buildDefinitionId, sourceBranchName, templateParameters, tags)
 	if err != nil {
-		result.Error = err
-		return
+		panic(err)
 	}
 	buildLinks := build.Links.(map[string]interface{})
 	buildWebLinks := buildLinks["web"].(map[string]interface{})
@@ -127,16 +146,14 @@ func DestroyWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, p
 
 	output.PrintlnfInfo("Waiting for build '%s' (%s)", *build.BuildNumber, buildWebLink)
 
-	err = azureDevOps.WaitForBuild(typeProjectName, build.Id, WaitForBuildAttempts, WaitForBuildInterval)
+	err = azureDevOps.WaitForBuild(projectName, *build.Id, WaitForBuildAttempts, WaitForBuildInterval)
 	if err != nil {
-		result.Error = err
-		return
+		panic(err)
 	}
 
-	build, err = azureDevOps.GetBuild(typeProjectName, build.Id)
+	build, err = azureDevOps.GetBuild(projectName, *build.Id)
 	if err != nil {
-		result.Error = err
-		return
+		panic(err)
 	}
 
 	if build.FinishTime != nil {
@@ -144,16 +161,17 @@ func DestroyWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, p
 	}
 
 	if err != nil {
-		result.Error = err
 		output.PrintlnfInfo("Build '%s' has not completed (%s)", *build.BuildNumber, buildWebLink)
-		return
+		panic(err)
 	}
 
 	output.PrintlnfInfo("Build '%s' has completed with result '%s' (%s)", *build.BuildNumber, *build.Result, buildWebLink)
 
 	if *build.Result != "succeeded" {
-		result.Error = fmt.Errorf("build '%d' has result '%s'", *build.Id, *build.Result)
+		panic(fmt.Errorf("build '%d' has result '%s'", *build.Id, *build.Result))
 	}
+
+	result.Status = core.WorkloadResultStatusValuesType.Succeeded
 
 	return
 }
