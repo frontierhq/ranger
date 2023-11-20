@@ -3,7 +3,7 @@ module github.com/frontierdigital/ranger
 go 1.21
 
 require (
-	github.com/frontierdigital/utils v0.0.10-pre
+	github.com/frontierdigital/utils v0.0.10
 	github.com/google/uuid v1.1.2
 	github.com/libgit2/git2go/v34 v34.0.0
 	github.com/otiai10/copy v1.9.0
