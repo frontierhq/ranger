@@ -71,26 +71,14 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, pr
 
 	output.PrintlnfInfo("Found repository with Id '%s' for workload type '%s' (%s)", repository.Id, workloadInstance.Type, *repository.WebUrl)
 
-	var buildDefinitionId *int
 	pipelineName := fmt.Sprintf("%s~%s (deploy)", typeProjectName, typeRepositoryName)
-	buildDefinitionRef, err := azureDevOps.GetBuildDefinitionByName(projectName, pipelineName)
+	buildDefinition, err := azureDevOps.GetOrCreateBuildDefinition(projectName, pipelineName, repository.Id.String(), "Ranger/Workloads", "azure-pipelines.deploy.yml")
 	if err != nil {
-		if _, ok := err.(*azuredevops.BuildNotFoundError); ok {
-			buildDefinition, err := azureDevOps.CreateBuildDefinition(projectName, repository.Id.String(), "Ranger/Workloads", pipelineName, "azure-pipelines.deploy.yml")
-			if err != nil {
-				panic(err)
-			}
-			buildDefinitionId = buildDefinition.Id
-			output.PrintlnfInfo("Created deploy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
-				*buildDefinitionId, workloadInstance.Type, organisationName, projectName, *buildDefinitionId)
-		} else {
-			panic(err)
-		}
-	} else {
-		buildDefinitionId = buildDefinitionRef.Id
-		output.PrintlnfInfo("Found deploy pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
-			*buildDefinitionId, workloadInstance.Type, organisationName, projectName, *buildDefinitionId)
+		panic(err)
 	}
+
+	output.PrintlnfInfo("Found or created pipeline definition with Id '%d' for workload type '%s' (https://dev.azure.com/%s/%s/_build?definitionId=%d)",
+		*buildDefinition.Id, workloadInstance.Type, organisationName, projectName, *buildDefinition.Id)
 
 	configRef, err := workload.PrepareConfig(config, projectName, organisationName, environment, set, workloadInstance)
 	if err != nil {
@@ -113,7 +101,7 @@ func DeployWorkload(azureDevOps azuredevops.AzureDevOps, config *core.Config, pr
 
 	sourceBranchName := fmt.Sprintf("refs/tags/%s", workloadInstance.Version)
 
-	build, err := azureDevOps.QueueBuild(projectName, *buildDefinitionId, sourceBranchName, templateParameters, tags)
+	build, err := azureDevOps.QueueBuild(projectName, *buildDefinition.Id, sourceBranchName, templateParameters, tags)
 	if err != nil {
 		panic(err)
 	}
