@@ -42,3 +42,63 @@ func getSetNameFromRepoName(repoName *string) *string {
 
 	return &n
 }
+
+func (s *Set) GetEnvNames() []string {
+	var envs []string
+	envs = append(envs, s.Environment)
+
+	for {
+		s = s.Next
+		envs = append(envs, s.Environment)
+		if s.Next == nil {
+			break
+		}
+	}
+
+	return envs
+}
+
+func (c *SetCollection) findLastEnv() *Set {
+	for _, s := range c.Sets {
+		if s.Manifest.NextEnvironment == "" {
+			return s
+		}
+	}
+	return nil
+}
+
+func (c *SetCollection) findPreviousEnv(s *Set) *Set {
+	for _, v := range c.Sets {
+		if v.Environment != s.Environment && v.Manifest.NextEnvironment == s.Environment {
+			return v
+		}
+	}
+	return nil
+}
+
+func (c *SetCollection) Environments() []string {
+	var envs []string
+	current := c.Entry
+	for {
+		envs = append(envs, current.Environment)
+		if current.Next == nil {
+			break
+		}
+		current = current.Next
+	}
+	return envs
+}
+
+func (c *SetCollection) Order() {
+	currentSet := c.findLastEnv()
+	for {
+		previousSet := c.findPreviousEnv(currentSet)
+		if previousSet == nil {
+			break
+		}
+		currentSet.Previous = previousSet
+		previousSet.Next = currentSet
+		currentSet = previousSet
+	}
+	c.Entry = currentSet
+}
