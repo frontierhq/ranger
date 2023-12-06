@@ -89,6 +89,14 @@ func getManifestContent(azureDevOps *azuredevops.AzureDevOps, projectName *strin
 	return &man, nil
 }
 
+func updateSetCollections(sets *[]SetCollection, sc *SetCollection) {
+	for i, s := range *sets {
+		if s.Name == sc.Name {
+			(*sets)[i] = *sc
+		}
+	}
+}
+
 func (ado *AzureDevOps) GetSets() (*[]SetCollection, error) {
 	azureDevOps := azuredevops.NewAzureDevOps(ado.OrganisationName, ado.PAT)
 	var sets []SetCollection
@@ -98,6 +106,7 @@ func (ado *AzureDevOps) GetSets() (*[]SetCollection, error) {
 		return nil, err
 	}
 
+	var sc *SetCollection
 	for _, r := range *repos {
 		if strings.HasSuffix(*r.Name, "-set") {
 			n := getSetNameFromRepoName(r.Name)
@@ -107,16 +116,25 @@ func (ado *AzureDevOps) GetSets() (*[]SetCollection, error) {
 				return nil, err
 			}
 
-			sc := getSetCollectionByName(&sets, *n)
+			sc = getSetCollectionByName(&sets, *n)
 			if sc == nil {
 				sets = newSetCollection(&sets, *n)
 				sc = getSetCollectionByName(&sets, *n)
 			}
 			sc.addSet(&Set{
-				Name:     *n,
-				Manifest: m,
+				Name:        *n,
+				Manifest:    m,
+				Environment: m.Environment,
+				Next:        nil,
+				Previous:    nil,
 			})
+			updateSetCollections(&sets, sc)
 		}
+	}
+
+	for _, s := range sets {
+		s.Order()
+		updateSetCollections(&sets, &s)
 	}
 	return &sets, nil
 }
