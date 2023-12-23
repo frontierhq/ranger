@@ -12,11 +12,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/frontierdigital/ranger/pkg/core"
-	rtime "github.com/frontierdigital/ranger/pkg/util/time"
-	igit "github.com/frontierdigital/utils/git"
-	git "github.com/frontierdigital/utils/git/external_git"
-	"github.com/frontierdigital/utils/output"
+	igit "github.com/gofrontier-com/go-utils/git"
+	git "github.com/gofrontier-com/go-utils/git/external_git"
+	"github.com/gofrontier-com/go-utils/output"
+	"github.com/gofrontier-com/ranger/pkg/core"
+	rtime "github.com/gofrontier-com/ranger/pkg/util/time"
 )
 
 //go:embed tpl/*

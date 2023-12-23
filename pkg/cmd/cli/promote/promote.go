@@ -1,7 +1,7 @@
 package promote
 
 import (
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 	"github.com/spf13/cobra"
 )
 

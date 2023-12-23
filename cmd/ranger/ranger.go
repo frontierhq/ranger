@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/ranger"
+	"github.com/gofrontier-com/ranger/pkg/cmd/ranger"
 )
 
 var (

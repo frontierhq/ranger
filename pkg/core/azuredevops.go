@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/frontierdigital/utils/azuredevops"
+	"github.com/gofrontier-com/go-utils/azuredevops"
 	"github.com/google/uuid"
 )
 

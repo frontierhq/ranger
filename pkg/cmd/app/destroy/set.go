@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/frontierdigital/ranger/pkg/core"
-	"github.com/frontierdigital/ranger/pkg/util/workload"
-	"github.com/frontierdigital/utils/azuredevops"
-	"github.com/frontierdigital/utils/output"
+	"github.com/gofrontier-com/go-utils/azuredevops"
+	"github.com/gofrontier-com/go-utils/output"
+	"github.com/gofrontier-com/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/util/workload"
 )
 
 const (

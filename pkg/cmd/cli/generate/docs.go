@@ -1,8 +1,8 @@
 package generate
 
 import (
-	"github.com/frontierdigital/ranger/pkg/cmd/app/generate"
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/cmd/app/generate"
+	"github.com/gofrontier-com/ranger/pkg/core"
 
 	"github.com/spf13/cobra"
 )

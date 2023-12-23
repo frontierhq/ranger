@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/frontierdigital/utils/output"
+	"github.com/gofrontier-com/go-utils/output"
 	"gopkg.in/yaml.v2"
 )
 

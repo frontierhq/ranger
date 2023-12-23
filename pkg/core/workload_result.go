@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/frontierdigital/utils/output"
+	"github.com/gofrontier-com/go-utils/output"
 )
 
 func (d *WorkloadResult) PrintResult() {

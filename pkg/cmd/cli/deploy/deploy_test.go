@@ -3,7 +3,7 @@ package deploy
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 )
 
 func TestNewCmdDeploy(t *testing.T) {

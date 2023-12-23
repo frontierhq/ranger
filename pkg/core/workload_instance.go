@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/frontierdigital/utils/output"
+	"github.com/gofrontier-com/go-utils/output"
 )
 
 func (w *WorkloadInstance) GetTypeProjectAndRepositoryNames() (string, string) {

@@ -3,7 +3,7 @@ package config
 import (
 	"strings"
 
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 	"github.com/spf13/viper"
 )
 

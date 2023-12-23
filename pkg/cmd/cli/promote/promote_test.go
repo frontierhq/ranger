@@ -3,7 +3,7 @@ package promote
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 )
 
 func TestNewCmdPromote(t *testing.T) {

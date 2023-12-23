@@ -3,7 +3,7 @@ package destroy
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 )
 
 func TestNewCmdDestroy(t *testing.T) {
