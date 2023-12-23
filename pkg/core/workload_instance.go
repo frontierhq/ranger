@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/frontierdigital/utils/output"
-	"github.com/frontierdigital/utils/str"
 )
 
 func (w *WorkloadInstance) GetTypeProjectAndRepositoryNames() (string, string) {
@@ -15,7 +14,7 @@ func (w *WorkloadInstance) GetTypeProjectAndRepositoryNames() (string, string) {
 
 func (w *WorkloadInstance) PrintHeader() {
 	builder := &strings.Builder{}
-	builder.WriteString(fmt.Sprintf("%s\n", str.Repeat("=", 78)))
+	builder.WriteString(fmt.Sprintf("%s\n", strings.Repeat("=", 78)))
 	builder.WriteString(fmt.Sprintf("Name     | %s\n", w.Name))
 	builder.WriteString(fmt.Sprintf("Type     | %s\n", w.Type))
 	builder.WriteString(fmt.Sprintf("Version  | %s\n", w.Version))

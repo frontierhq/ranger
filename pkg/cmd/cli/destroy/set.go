@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	projectName = ""
-	orgName     = ""
+	projectName string
+	orgName     string
 )
 
 // NewCmdDestroySet creates a command to destroy a set

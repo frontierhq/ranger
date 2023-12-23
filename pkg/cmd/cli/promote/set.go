@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	projectName     = ""
-	nextEnvironment = ""
-	orgName         = ""
+	projectName string
+	orgName     string
 )
 
 // NewCmdPromoteSet creates a command to promote a set

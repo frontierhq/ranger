@@ -1,4 +1,4 @@
-# Ranger Maintainers
+# Maintainers
 
 ## Maintainers
 

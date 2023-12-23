@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	projectName = ""
-	orgName     = ""
+	projectName string
+	orgName     string
 )
 
 // NewCmdDeploySet creates a command to deploy a set
