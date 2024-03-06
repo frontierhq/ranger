@@ -1,1 +1,1 @@
-# Ranger Changelog
+# Changelog

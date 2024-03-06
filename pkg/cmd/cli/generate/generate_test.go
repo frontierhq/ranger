@@ -3,7 +3,7 @@ package generate
 import (
 	"testing"
 
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 )
 
 func TestNewCmdGenerate(t *testing.T) {

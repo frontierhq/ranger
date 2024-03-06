@@ -1,16 +1,15 @@
 package promote
 
 import (
-	"github.com/frontierdigital/ranger/pkg/cmd/app/promote"
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/cmd/app/promote"
+	"github.com/gofrontier-com/ranger/pkg/core"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	projectName     = ""
-	nextEnvironment = ""
-	orgName         = ""
+	projectName string
+	orgName     string
 )
 
 // NewCmdPromoteSet creates a command to promote a set

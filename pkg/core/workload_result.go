@@ -5,8 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/frontierdigital/utils/output"
-	"github.com/frontierdigital/utils/str"
+	"github.com/gofrontier-com/go-utils/output"
 )
 
 func (d *WorkloadResult) PrintResult() {
@@ -26,7 +25,7 @@ func (d *WorkloadResult) PrintResult() {
 	}
 
 	builder := &strings.Builder{}
-	builder.WriteString(fmt.Sprintf("%s\n", str.Repeat("-", 78)))
+	builder.WriteString(fmt.Sprintf("%s\n", strings.Repeat("-", 78)))
 	builder.WriteString(fmt.Sprintf("Result    | %s\n", d.Status))
 	builder.WriteString(fmt.Sprintf("Link      | %s\n", d.Link))
 	builder.WriteString(fmt.Sprintf("Queued    | %s\n", queueTime))

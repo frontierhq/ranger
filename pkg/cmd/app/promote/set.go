@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/frontierdigital/ranger/pkg/core"
-	"github.com/frontierdigital/utils/azuredevops"
-	git "github.com/frontierdigital/utils/git/external_git"
-	"github.com/frontierdigital/utils/output"
+	"github.com/gofrontier-com/go-utils/azuredevops"
+	git "github.com/gofrontier-com/go-utils/git/external_git"
+	"github.com/gofrontier-com/go-utils/output"
+	"github.com/gofrontier-com/ranger/pkg/core"
 )
 
 func PromoteSet(config *core.Config, projectName string, organisationName string) error {

@@ -3,13 +3,13 @@ package ranger
 import (
 	"os"
 
-	"github.com/frontierdigital/ranger/pkg/cmd/cli/deploy"
-	"github.com/frontierdigital/ranger/pkg/cmd/cli/destroy"
-	"github.com/frontierdigital/ranger/pkg/cmd/cli/generate"
-	"github.com/frontierdigital/ranger/pkg/cmd/cli/promote"
-	vers "github.com/frontierdigital/ranger/pkg/cmd/cli/version"
-	"github.com/frontierdigital/ranger/pkg/util/config"
-	"github.com/frontierdigital/utils/output"
+	"github.com/gofrontier-com/go-utils/output"
+	"github.com/gofrontier-com/ranger/pkg/cmd/cli/deploy"
+	"github.com/gofrontier-com/ranger/pkg/cmd/cli/destroy"
+	"github.com/gofrontier-com/ranger/pkg/cmd/cli/generate"
+	"github.com/gofrontier-com/ranger/pkg/cmd/cli/promote"
+	vers "github.com/gofrontier-com/ranger/pkg/cmd/cli/version"
+	"github.com/gofrontier-com/ranger/pkg/util/config"
 
 	"github.com/spf13/cobra"
 )

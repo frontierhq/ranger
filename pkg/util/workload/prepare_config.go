@@ -5,10 +5,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/frontierdigital/ranger/pkg/core"
+	"github.com/gofrontier-com/ranger/pkg/core"
 
-	git "github.com/frontierdigital/utils/git/external_git"
-	"github.com/frontierdigital/utils/output"
+	git "github.com/gofrontier-com/go-utils/git/external_git"
+	"github.com/gofrontier-com/go-utils/output"
 	"github.com/otiai10/copy"
 	"github.com/segmentio/ksuid"
 )
