@@ -12,7 +12,10 @@
 Ranger
 ======
 
-Ranger is a command line tool that enables "GitOps for everything" by providing a technology-agnostic contract-based framework to define how workloads (and their associated configuration and secrets) are built, tested, deployed (and destroyed) and promoted through environments.
+Ranger is a command line tool that enables "GitOps for everything" by providing
+a technology-agnostic contract-based framework to define how universal workloads
+(and their associated configuration and secrets) are built, tested, deployed,
+destroyed and promoted through environments.
 
 .. contents:: Table of Contents
     :local:
@@ -21,9 +24,16 @@ Ranger is a command line tool that enables "GitOps for everything" by providing 
 About
 -----
 
-Ranger has been built to allow platform teams to provide a deployment framework
+Ranger has been built to enable organisations to build, test, configure, deploy, destroy and promote
+universal workloads (infrastructure, platform, application, data - anything!) using GitOps
+inside the existing CI/CD system (without need to deploy additional platform tooling).
 
-Ranger enables common GitOps outcomes - including improved efficiency and security, a better developer experience, reduced costs, and faster deployments - all from your existing CI/CD platform.
+It was created by a platform team who were using tools like Flux and ArgoCD for GitOps at
+the application layer, and wanted the same outcomes at the infrastructure and platform layer.
+
+Ranger enables those GitOps outcomes - including improved efficiency and security,
+a better developer experience, reduced costs, and faster deployments - at all layers of
+the stack, all from your existing CI/CD system.
 
 --------
 Concepts
@@ -37,7 +47,11 @@ Mermaid diagram?
 GitOps
 ~~~~~~
 
-Something about GitOps and it's traditional use in K8S apps, but how Ranger enables "for everything".
+GitOps uses Git repositories as a single source of truth to deliver infrastructure as code.
+Submitted code checks the CI process, while the CD process checks and applies requirements
+for things like security, infrastructure as code, or any other boundaries set for the
+application framework. All changes to code are tracked, making updates easy while also
+providing version control should a rollback be needed.
 
 ~~~~~~~~~
 Workloads
@@ -52,20 +66,38 @@ Sets
 Something about what a set represents, like application, user journey, tier/stack?
 
 --------
+Workflow
+--------
+
+--------
 Download
 --------
 
-~~~~~~~
+~~~~~~~~~~~~
+Azure DevOps
+~~~~~~~~~~~~
+
 Release
 ~~~~~~~
 
 Binaries and packages of the latest stable release are available at `https://github.com/gofrontier-com/ranger/releases <https://github.com/gofrontier-com/ranger/releases>`_.
 
-~~~~~~~~~
 Extension
 ~~~~~~~~~
 
 The Ranger extension for Azure DevOps is available from `Visual Studio Marketplace <https://marketplace.visualstudio.com/items?itemName=gofrontier.ranger>`_, which will automatically install Ranger via a task.
+
+~~~~~~~~~~~~~~
+GitHub Actions
+~~~~~~~~~~~~~~
+
+*Coming soon...*
+
+~~~~~~~
+Jenkins
+~~~~~~~
+
+*Coming soon...*
 
 -------------
 Configuration
