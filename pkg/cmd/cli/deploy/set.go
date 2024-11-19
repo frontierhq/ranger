@@ -7,11 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	projectName string
-	orgName     string
-)
-
 // NewCmdDeploySet creates a command to deploy a set
 func NewCmdDeploySet(config *core.Config) *cobra.Command {
 	cmd := &cobra.Command{

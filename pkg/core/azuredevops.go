@@ -61,6 +61,9 @@ func (ado *AzureDevOps) GetWorkloadInfo() (*[]Workload, error) {
 	for _, p := range *packages {
 		if len(*p.Versions) > 0 {
 			c, _ := azureDevOps.GetFileContent(ado.ProjectName, *p.Name, *(*p.Versions)[0].Version, "README.md", "tag")
+			if c == nil {
+				continue
+			}
 			workloads = append(workloads, Workload{
 				Name:    strings.ReplaceAll(*p.Name, "-workload", ""),
 				Version: *(*p.Versions)[0].Version,

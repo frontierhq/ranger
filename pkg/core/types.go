@@ -69,6 +69,7 @@ type WorkloadIndex struct {
 
 type WorkloadInstance struct {
 	ExtraParameters []ExtraParameter `yaml:"extraParameters"`
+	FilePath        string           `yaml:"-"`
 	Name            string           `yaml:"name"`
 	PreventDestroy  bool             `yaml:"preventDestroy"`
 	Type            string           `yaml:"type"`

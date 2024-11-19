@@ -5,6 +5,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	environment string
+	projectName string
+	orgName     string
+)
+
 // NewCmdDeploy creates a command to deploy an artifact
 func NewCmdDeploy(config *core.Config) *cobra.Command {
 	cmd := &cobra.Command{
@@ -12,6 +18,7 @@ func NewCmdDeploy(config *core.Config) *cobra.Command {
 		Short: "Deploy an artifact",
 	}
 
+	cmd.AddCommand(NewCmdDeployWorkload(config))
 	cmd.AddCommand(NewCmdDeploySet(config))
 
 	return cmd

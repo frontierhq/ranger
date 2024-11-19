@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/gofrontier-com/go-utils/output"
+	"github.com/gofrontier-com/ranger/pkg/cmd/cli/add"
 	"github.com/gofrontier-com/ranger/pkg/cmd/cli/deploy"
 	"github.com/gofrontier-com/ranger/pkg/cmd/cli/destroy"
 	"github.com/gofrontier-com/ranger/pkg/cmd/cli/generate"
@@ -27,6 +28,7 @@ func NewRootCmd(version string, commit string, date string) *cobra.Command {
 		Short:                 "ranger is the command line tool for Ranger",
 	}
 
+	cmd.AddCommand(add.NewCmdAdd(config))
 	cmd.AddCommand(deploy.NewCmdDeploy(config))
 	cmd.AddCommand(destroy.NewCmdDestroy(config))
 	cmd.AddCommand(generate.NewCmdGenerate(config))

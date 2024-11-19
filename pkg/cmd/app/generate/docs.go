@@ -22,7 +22,7 @@ import (
 //go:embed tpl/*
 var wikiTemplates embed.FS
 
-type Workload struct {
+type Workload struct { // TODO: Move
 	Name    string
 	Version string
 	Build   string
@@ -80,7 +80,7 @@ func publish(ado *core.AzureDevOps, repoName string, repo interface{ igit.Git })
 	return nil
 }
 
-type WikiContent struct {
+type WikiContent struct { // TODO: Move
 	Sets      []core.SetCollection
 	Workloads []core.Workload
 }
